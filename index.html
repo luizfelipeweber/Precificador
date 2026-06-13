@@ -1174,7 +1174,7 @@ function obterToken() {
 async function salvarGDrive() {
   if (!_state) { calcular(); }
   const { v, c, ep, bd } = _state;
-  console.log('salvarGDrive state:', { v: !!v, c: !!c, ep, bd: !!bd });
+
   const cliente = document.getElementById('cliente').value || 'Cliente';
   const obs     = document.getElementById('obs').value;
   const dataStr = document.getElementById('data').value || new Date().toISOString().split('T')[0];
