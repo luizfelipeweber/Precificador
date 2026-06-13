@@ -1192,200 +1192,240 @@ async function salvarGDrive() {
   showStatus('status-msg', 'Gerando e salvando PDF no Drive…', 'info', true);
 
   try {
-    // Gerar PDF com jsPDF (sem depender da Docs API ou de backend)
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const M = 18, W = 210 - M * 2, PB = 283;
+    let y = M;
 
-    const margem = 20;
-    const largura = 210 - margem * 2;
-    let y = margem;
+    const fmtN  = n => n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const fmtR  = n => 'R$ ' + fmtN(n);
+    const fmtP  = n => (n * 100).toFixed(1).replace('.', ',') + ' %';
+    const fmtPb = pb => {
+      if (pb === null) return '—';
+      if (pb < 1)  return 'Dentro do 1° mês';
+      if (pb > 12) return pb.toFixed(1).replace('.', ',') + ' meses (alem do contrato)';
+      return 'Mes ' + Math.ceil(pb) + ' de 12';
+    };
 
-    // Cabeçalho verde
-    doc.setFillColor(12, 68, 72);
-    doc.rect(0, 0, 210, 28, 'F');
+    const addPage = () => { doc.addPage(); y = M; };
+    const checkY  = (h = 10) => { if (y + h > PB) addPage(); };
+
+    const secTitle = (txt) => {
+      checkY(10);
+      doc.setFillColor(12, 68, 72);
+      doc.rect(M, y, W, 7, 'F');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+      doc.setTextColor(255, 255, 255);
+      doc.text(txt, M + 3, y + 5);
+      y += 11; doc.setTextColor(30, 30, 30);
+    };
+
+    const linha = (label, valor, bold = false) => {
+      checkY(7);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+      doc.setTextColor(90, 90, 90); doc.text(label, M + 2, y);
+      doc.setFont('helvetica', bold ? 'bold' : 'normal');
+      doc.setTextColor(bold ? 12 : 30, bold ? 68 : 30, bold ? 72 : 30);
+      doc.text(valor, 210 - M, y, { align: 'right' }); y += 6;
+    };
+
+    const linhaDest = (label, valor, r, g, b, tr = 255, tg = 255, tb = 255) => {
+      checkY(9);
+      doc.setFillColor(r, g, b); doc.rect(M, y - 1, W, 8, 'F');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+      doc.setTextColor(tr, tg, tb);
+      doc.text(label, M + 3, y + 5); doc.text(valor, 210 - M - 1, y + 5, { align: 'right' });
+      y += 12; doc.setTextColor(30, 30, 30);
+    };
+
+    const sep = () => {
+      checkY(5);
+      doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.2);
+      doc.line(M, y, 210 - M, y); y += 5;
+    };
+
+    // CABECALHO
+    doc.setFillColor(12, 68, 72); doc.rect(0, 0, 210, 30, 'F');
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text('ZELO', margem, 13);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text('gestão financeira', margem, 19);
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text('PROPOSTA COMERCIAL', 210 - margem, 13, { align: 'right' });
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.text('v3.0 · 2026', 210 - margem, 19, { align: 'right' });
-
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(20); doc.text('ZELO', M, 14);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.text('gestao financeira', M, 21);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+    doc.text('DOSSIE DE ORCAMENTO', 210 - M, 13, { align: 'right' });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+    doc.text('Uso interno - equipe comercial', 210 - M, 20, { align: 'right' });
     y = 38;
-    doc.setTextColor(30, 30, 30);
 
-    // Info cliente
-    doc.setFontSize(13);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(12, 68, 72);
-    doc.text(cliente, margem, y); y += 6;
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 100, 100);
+    // IDENTIFICACAO
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(15); doc.setTextColor(12, 68, 72);
+    doc.text(cliente, M, y); y += 7;
     const dataFmt = document.getElementById('data').value
       ? new Date(document.getElementById('data').value + 'T12:00:00').toLocaleDateString('pt-BR')
       : new Date().toLocaleDateString('pt-BR');
-    doc.text('Data: ' + dataFmt, margem, y); y += 10;
-
-    // Linha separadora
-    doc.setDrawColor(12, 68, 72);
-    doc.setLineWidth(0.5);
-    doc.line(margem, y, 210 - margem, y); y += 7;
-
-    // Seção composição
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(12, 68, 72);
-    doc.text('COMPOSIÇÃO DO CUSTO MENSAL', margem, y); y += 6;
-
-    const linhasCusto = [
-      ['Operação financeira',        c.operacao],
-      ['Adicional operacional',      c.adicional],
-      ['Análise gerencial',          c.analise],
-      ['Implantação (÷ 12 meses)',   c.implantacao],
-    ];
-
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(30, 30, 30);
-    linhasCusto.forEach(([label, val]) => {
-      doc.setFontSize(9);
-      doc.text(label, margem + 2, y);
-      doc.text(fmt(val), 210 - margem, y, { align: 'right' });
-      y += 6;
-    });
-
-    // Total serviço — fundo cinza
-    doc.setFillColor(225, 245, 238);
-    doc.rect(margem, y - 1, largura, 8, 'F');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.setTextColor(12, 68, 72);
-    doc.text('Total Serviço (custo mensal)', margem + 2, y + 5);
-    doc.text(fmt(c.total), 210 - margem, y + 5, { align: 'right' });
-    y += 14;
-
-    // Linha separadora
-    doc.setDrawColor(200, 200, 200);
-    doc.setLineWidth(0.3);
-    doc.line(margem, y, 210 - margem, y); y += 7;
-
-    // Seção preço
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(12, 68, 72);
-    doc.text('PREÇO', margem, y); y += 6;
-
-    // PV sugerido
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 100, 100);
-    doc.setFontSize(9);
-    doc.text('PV sugerido (EBITDA 40%)', margem + 2, y);
-    doc.text(fmt(c.pv_sug), 210 - margem, y, { align: 'right' });
-    y += 7;
-
-    // PV praticado — destaque
-    doc.setFillColor(12, 68, 72);
-    doc.rect(margem, y - 1, largura, 10, 'F');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.setTextColor(255, 255, 255);
-    doc.text('Preço mensal praticado', margem + 3, y + 6);
-    doc.text(fmt(v.pv_prat), 210 - margem - 2, y + 6, { align: 'right' });
-    y += 16;
-
-    // EBITDA + métricas anuais
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(30, 30, 30);
-    const ebitdaStr = ep !== null ? (ep * 100).toFixed(1).replace('.', ',') + ' %' : '—';
-    doc.text('EBITDA praticado', margem + 2, y);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(ep !== null && ep >= 0.4 ? 15 : 226, ep !== null && ep >= 0.4 ? 158 : 75, ep !== null && ep >= 0.4 ? 117 : 74);
-    doc.text(ebitdaStr, 210 - margem, y, { align: 'right' });
-    y += 7;
-
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(30, 30, 30);
-    doc.text('Receita anual (12 meses)', margem + 2, y);
-    doc.text(fmt(v.pv_prat * 12), 210 - margem, y, { align: 'right' });
-    y += 7;
-
-    if (ep !== null) {
-      doc.text('Margem anual (R$)', margem + 2, y);
-      doc.text(fmt(v.pv_prat * ep * 12), 210 - margem, y, { align: 'right' });
-      y += 7;
-    }
-
-    doc.text('Conta Azul inclusa', margem + 2, y);
-    doc.text(v.ca ? 'Sim' : 'Não', 210 - margem, y, { align: 'right' });
+    const cxLabel = v.cx === 1 ? '1 - Simples' : v.cx === 2 ? '2 - Media' : '3 - Alta';
+    const multLabel = v.cx === 1 ? bd.c1 : v.cx === 2 ? bd.c2 : bd.c3;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(100, 100, 100);
+    doc.text('Data: ' + dataFmt + '   |   Complexidade: ' + cxLabel + ' (x' + multLabel + ')   |   Conta Azul: ' + (v.ca ? 'Sim' : 'Nao'), M, y);
     y += 10;
 
-    // Observações
+    // 1. VARIAVEIS OPERACIONAIS
+    secTitle('1. VARIAVEIS OPERACIONAIS');
+    const col2 = M + W / 2 + 4;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(12, 68, 72);
+    doc.text('VOLUME / MES', M + 2, y); doc.text('TEMPO POR TAREFA (min)', col2, y); y += 5;
+    doc.setDrawColor(12, 68, 72); doc.setLineWidth(0.3); doc.line(M, y, 210 - M, y); y += 5;
+
+    const tarefasOp = [
+      ['Lancamentos de entrada', v.lanc_ent, v.t_le],
+      ['Lancamentos de saida',   v.lanc_sai, v.t_ls],
+      ['Conciliacao de entradas',v.conc_ent, v.t_ce],
+      ['Conciliacao de saidas',  v.conc_sai, v.t_cs],
+      ['Agendamentos',           v.agend,    v.t_ag],
+    ];
+    tarefasOp.forEach(([nome, qtd, min]) => {
+      checkY(7);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(50, 50, 50);
+      doc.text(nome, M + 2, y);
+      doc.setFont('helvetica', 'bold'); doc.setTextColor(30, 30, 30);
+      doc.text(String(qtd), col2 - 5, y, { align: 'right' });
+      doc.text(String(min) + ' min', 210 - M, y, { align: 'right' }); y += 6;
+    });
+    y += 2;
+
+    const camposExtra = [
+      ['Horas de implantacao', v.horas_impl + ' h'],
+      ['Cartoes de credito',   String(v.cartoes)],
+      ['Contas bancarias',     String(v.contas)],
+    ];
+    camposExtra.forEach(([l, vl]) => {
+      checkY(6);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(50, 50, 50); doc.text(l, M + 2, y);
+      doc.setFont('helvetica', 'bold'); doc.setTextColor(30, 30, 30); doc.text(vl, 210 - M, y, { align: 'right' }); y += 6;
+    });
+    y += 4;
+
+    // 2. CONTROLE DIARIO
+    secTitle('2. CONTROLE DIARIO DE OPERACAO');
+    doc.setFont('helvetica', 'italic'); doc.setFontSize(8); doc.setTextColor(120, 120, 120);
+    doc.text('Base: ' + bd.dias.toString().replace('.', ',') + ' dias uteis/mes', M + 2, y); y += 6;
+
+    const cD = [M+2, M+60, M+95, M+125, M+158];
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(12, 68, 72);
+    doc.text('Tarefa', cD[0], y); doc.text('Qtd/mes', cD[1], y);
+    doc.text('Qtd/dia', cD[2], y); doc.text('Min/tarefa', cD[3], y); doc.text('Min/dia', cD[4], y);
+    y += 4; doc.setDrawColor(12, 68, 72); doc.setLineWidth(0.3); doc.line(M, y, 210 - M, y); y += 5;
+
+    let totMinDia = 0;
+    tarefasOp.forEach(([nome, qtd, min]) => {
+      checkY(6);
+      const dia = qtd / bd.dias, md = dia * min; totMinDia += md;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(50, 50, 50);
+      doc.text(nome, cD[0], y); doc.text(String(qtd), cD[1], y);
+      doc.text(dia.toFixed(2).replace('.',','), cD[2], y);
+      doc.text(String(min), cD[3], y); doc.text(md.toFixed(2).replace('.',','), cD[4], y); y += 6;
+    });
+
+    const adicMinDia = c.adicional / bd.operador / 22 * 60; totMinDia += adicMinDia;
+    checkY(6); doc.setTextColor(80, 80, 80);
+    doc.text('Adicional Operacao', cD[0], y); doc.text('-', cD[1], y); doc.text('-', cD[2], y);
+    doc.text('-', cD[3], y); doc.text(adicMinDia.toFixed(2).replace('.',','), cD[4], y); y += 2;
+
+    doc.setFillColor(225, 245, 238); doc.rect(M, y, W, 8, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(12, 68, 72);
+    doc.text('TOTAL', cD[0], y + 5); doc.text(totMinDia.toFixed(2).replace('.',',') + ' min/dia', cD[4], y + 5);
+    y += 14;
+
+    // 3. COMPOSICAO DO CUSTO
+    secTitle('3. COMPOSICAO DO CUSTO MENSAL');
+    linha('Operacao financeira',       fmtR(c.operacao));
+    linha('Adicional operacional',     fmtR(c.adicional));
+    linha('Analise gerencial (x' + multLabel + ')', fmtR(c.analise));
+    linha('Implantacao (div. 12 meses)', fmtR(c.implantacao));
+    sep();
+    linhaDest('TOTAL SERVICO - custo mensal', fmtR(c.total), 225, 245, 238, 12, 68, 72);
+
+    // 4. PRECIFICACAO
+    secTitle('4. PRECIFICACAO');
+    linha('PV sugerido (EBITDA 40%)', fmtR(c.pv_sug));
+    sep();
+    linhaDest('PV PRATICADO', fmtR(v.pv_prat), 12, 68, 72, 255, 255, 255);
+
+    const epOk = ep !== null && ep >= bd.ebitda;
+    const ebitdaStr = ep !== null ? fmtP(ep) : '-';
+    checkY(9);
+    doc.setFillColor(epOk ? 225 : 254, epOk ? 245 : 235, epOk ? 238 : 235);
+    doc.rect(M, y - 1, W, 8, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
+    doc.setTextColor(epOk ? 12 : 162, epOk ? 68 : 28, epOk ? 72 : 28);
+    doc.text('EBITDA praticado', M + 3, y + 5);
+    doc.text(ebitdaStr, 210 - M - 1, y + 5, { align: 'right' });
+    y += 13; doc.setTextColor(30, 30, 30);
+
+    // 5. METRICAS DO CONTRATO
+    secTitle('5. METRICAS DO CONTRATO (12 MESES)');
+    linha('Receita total do contrato', fmtR(v.pv_prat * 12));
+    if (ep !== null) linha('Margem total do contrato', fmtR(v.pv_prat * ep * 12), true);
+    const pb = ep !== null ? c.custo_impl_bruto / (v.pv_prat * ep) : null;
+    linha('Custo bruto da implantacao', fmtR(c.custo_impl_bruto));
+    linha('Margem mensal em R$', ep !== null ? fmtR(v.pv_prat * ep) : '-');
+    linha('Payback da implantacao', fmtPb(pb), pb !== null && pb > 12);
+
+    // 6. PARAMETROS DO BD
+    sep();
+    secTitle('6. PARAMETROS UTILIZADOS (BD)');
+    linha('Custo/hora operador',      'R$ ' + fmtN(bd.operador));
+    linha('Custo/hora implantador',   'R$ ' + fmtN(bd.implantador));
+    linha('Salario analista/mes',     'R$ ' + fmtN(bd.sal_analista));
+    linha('Clientes por analista',    String(bd.nCli));
+    linha('Custo analista/cliente',   fmtR(bd.analista_cli));
+    linha('Custo Conta Azul/mes',     fmtR(bd.ca));
+    linha('Despesas fixas',           fmtP(bd.desp_fixas));
+    linha('Imposto',                  fmtP(bd.imposto));
+    linha('Comissao analista',        fmtP(bd.comissao));
+    linha('EBITDA desejado',          fmtP(bd.ebitda));
+    linha('Dias uteis/mes',           bd.dias.toString().replace('.',','));
+
+    // OBSERVACOES
     if (obs) {
-      doc.setDrawColor(200, 200, 200);
-      doc.setLineWidth(0.3);
-      doc.line(margem, y, 210 - margem, y); y += 7;
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
-      doc.setTextColor(12, 68, 72);
-      doc.text('OBSERVAÇÕES', margem, y); y += 6;
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(30, 30, 30);
-      doc.setFontSize(9);
-      const obsLines = doc.splitTextToSize(obs, largura);
-      doc.text(obsLines, margem, y);
+      sep(); secTitle('OBSERVACOES');
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(30, 30, 30);
+      const obsLines = doc.splitTextToSize(obs, W - 4);
+      checkY(obsLines.length * 5 + 4); doc.text(obsLines, M + 2, y);
       y += obsLines.length * 5 + 6;
     }
 
-    // Rodapé
-    doc.setDrawColor(12, 68, 72);
-    doc.setLineWidth(0.5);
-    doc.line(margem, 287 - 10, 210 - margem, 287 - 10);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.setTextColor(150, 150, 150);
-    doc.text('Zelo Gestão Financeira · Proposta gerada em ' + new Date().toLocaleDateString('pt-BR'), margem, 287 - 5);
+    // RODAPE em todas as paginas
+    const totalPags = doc.getNumberOfPages();
+    for (let p = 1; p <= totalPags; p++) {
+      doc.setPage(p);
+      doc.setDrawColor(12, 68, 72); doc.setLineWidth(0.4); doc.line(M, 287, 210 - M, 287);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(150, 150, 150);
+      doc.text('Zelo Gestao Financeira · Dossie gerado em ' + new Date().toLocaleDateString('pt-BR') + ' · Uso interno', M, 291);
+      doc.text(p + ' / ' + totalPags, 210 - M, 291, { align: 'right' });
+    }
 
-    // 2. Obter blob do PDF
+    // UPLOAD
     const pdfBlob = doc.output('blob');
-
-    // 3. Upload direto para o Drive (multipart — só Drive API v3, sem Docs API)
-    const metaPdf = JSON.stringify({
-      name: nomeArq,
-      mimeType: 'application/pdf',
-      parents: [DRIVE_FOLDER_ID],
-    });
+    const metaPdf = JSON.stringify({ name: nomeArq, mimeType: 'application/pdf', parents: [DRIVE_FOLDER_ID] });
     const formData = new FormData();
     formData.append('metadata', new Blob([metaPdf], { type: 'application/json' }));
     formData.append('file', pdfBlob, nomeArq);
 
     const uploadResp = await fetch(
       'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true',
-      {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + token },
-        body: formData,
-      }
+      { method: 'POST', headers: { Authorization: 'Bearer ' + token }, body: formData }
     );
     if (!uploadResp.ok) {
       const errBody = await uploadResp.text();
       throw new Error(`Upload falhou (${uploadResp.status}): ${errBody}`);
     }
 
-    // 4. Registrar no histórico local
     registrarHistoricoLocal(v, c, ep);
-
     showStatus('status-msg', `"${nomeArq}" salvo no Drive ✓`, 'success', false);
   } catch (e) {
     showStatus('status-msg', 'Erro: ' + e.message, 'error', false);
   }
 }
+
 
 // ─── Histórico local ─────────────────────────────────────────────────────────
 function getHistorico() {
