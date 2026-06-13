@@ -1366,7 +1366,7 @@ async function salvarGDrive() {
     formData.append('file', pdfBlob, nomeArq);
 
     const uploadResp = await fetch(
-      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true',
       {
         method: 'POST',
         headers: { Authorization: 'Bearer ' + token },
