@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1169,46 +1170,6 @@ function obterToken() {
   });
 }
 
-// ─── Gerar texto da proposta ─────────────────────────────────────────────────
-function gerarTextoProposta(cliente, v, c, ep, obs) {
-  const d = document.getElementById('data').value || new Date().toLocaleDateString('pt-BR');
-  const fmtR = n => 'R$ ' + n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-
-  return `PROPOSTA COMERCIAL
-Zelo Gestão Financeira
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Cliente:  ${cliente}
-Data:     ${d}
-${obs ? 'Obs:      ' + obs : ''}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-COMPOSIÇÃO DE SERVIÇOS — MENSALIDADE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  Operação financeira         ${fmtR(c.operacao)}
-  Adicional operacional       ${fmtR(c.adicional)}
-  Análise gerencial           ${fmtR(c.analise)}
-  Implantação (÷ 12 meses)   ${fmtR(c.implantacao)}
-  ─────────────────────────────────────────
-  Total custo do serviço      ${fmtR(c.total)}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PREÇO
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  PV sugerido (EBITDA 40%)    ${fmtR(c.pv_sug)}
-  PV praticado                ${fmtR(v.pv_prat)}
-  EBITDA praticado            ${ep !== null ? (ep * 100).toFixed(1).replace('.', ',') + ' %' : '—'}
-
-  Receita anual               ${fmtR(v.pv_prat * 12)}
-  Conta Azul inclusa          ${v.ca ? 'Sim' : 'Não'}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Proposta gerada pelo Precificador Zelo Gestão Financeira
-`;
-}
-
 // ─── Google Drive — salvar PDF ───────────────────────────────────────────────
 async function salvarGDrive() {
   if (!_state) return;
@@ -1231,52 +1192,175 @@ async function salvarGDrive() {
   showStatus('status-msg', 'Gerando e salvando PDF no Drive…', 'info', true);
 
   try {
-    const texto = gerarTextoProposta(cliente, v, c, ep, obs);
+    // Gerar PDF com jsPDF (sem depender da Docs API ou de backend)
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
 
-    // 1. Criar Google Doc com o conteúdo (Drive API — upload multipart)
-    const boundary = 'zelo_boundary_' + Date.now();
-    const metadata = JSON.stringify({
-      name: nomeArq.replace('.pdf', ''),
-      mimeType: 'application/vnd.google-apps.document',
+    const margem = 20;
+    const largura = 210 - margem * 2;
+    let y = margem;
+
+    // Cabeçalho verde
+    doc.setFillColor(12, 68, 72);
+    doc.rect(0, 0, 210, 28, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ZELO', margem, 13);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('gestão financeira', margem, 19);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('PROPOSTA COMERCIAL', 210 - margem, 13, { align: 'right' });
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text('v3.0 · 2026', 210 - margem, 19, { align: 'right' });
+
+    y = 38;
+    doc.setTextColor(30, 30, 30);
+
+    // Info cliente
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(12, 68, 72);
+    doc.text(cliente, margem, y); y += 6;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    const dataFmt = document.getElementById('data').value
+      ? new Date(document.getElementById('data').value + 'T12:00:00').toLocaleDateString('pt-BR')
+      : new Date().toLocaleDateString('pt-BR');
+    doc.text('Data: ' + dataFmt, margem, y); y += 10;
+
+    // Linha separadora
+    doc.setDrawColor(12, 68, 72);
+    doc.setLineWidth(0.5);
+    doc.line(margem, y, 210 - margem, y); y += 7;
+
+    // Seção composição
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(12, 68, 72);
+    doc.text('COMPOSIÇÃO DO CUSTO MENSAL', margem, y); y += 6;
+
+    const linhasCusto = [
+      ['Operação financeira',        c.operacao],
+      ['Adicional operacional',      c.adicional],
+      ['Análise gerencial',          c.analise],
+      ['Implantação (÷ 12 meses)',   c.implantacao],
+    ];
+
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(30, 30, 30);
+    linhasCusto.forEach(([label, val]) => {
+      doc.setFontSize(9);
+      doc.text(label, margem + 2, y);
+      doc.text(fmt(val), 210 - margem, y, { align: 'right' });
+      y += 6;
+    });
+
+    // Total serviço — fundo cinza
+    doc.setFillColor(225, 245, 238);
+    doc.rect(margem, y - 1, largura, 8, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(12, 68, 72);
+    doc.text('Total Serviço (custo mensal)', margem + 2, y + 5);
+    doc.text(fmt(c.total), 210 - margem, y + 5, { align: 'right' });
+    y += 14;
+
+    // Linha separadora
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.3);
+    doc.line(margem, y, 210 - margem, y); y += 7;
+
+    // Seção preço
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(12, 68, 72);
+    doc.text('PREÇO', margem, y); y += 6;
+
+    // PV sugerido
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.setFontSize(9);
+    doc.text('PV sugerido (EBITDA 40%)', margem + 2, y);
+    doc.text(fmt(c.pv_sug), 210 - margem, y, { align: 'right' });
+    y += 7;
+
+    // PV praticado — destaque
+    doc.setFillColor(12, 68, 72);
+    doc.rect(margem, y - 1, largura, 10, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(255, 255, 255);
+    doc.text('Preço mensal praticado', margem + 3, y + 6);
+    doc.text(fmt(v.pv_prat), 210 - margem - 2, y + 6, { align: 'right' });
+    y += 16;
+
+    // EBITDA + métricas anuais
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(30, 30, 30);
+    const ebitdaStr = ep !== null ? (ep * 100).toFixed(1).replace('.', ',') + ' %' : '—';
+    doc.text('EBITDA praticado', margem + 2, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(ep !== null && ep >= 0.4 ? 15 : 226, ep !== null && ep >= 0.4 ? 158 : 75, ep !== null && ep >= 0.4 ? 117 : 74);
+    doc.text(ebitdaStr, 210 - margem, y, { align: 'right' });
+    y += 7;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(30, 30, 30);
+    doc.text('Receita anual (12 meses)', margem + 2, y);
+    doc.text(fmt(v.pv_prat * 12), 210 - margem, y, { align: 'right' });
+    y += 7;
+
+    if (ep !== null) {
+      doc.text('Margem anual (R$)', margem + 2, y);
+      doc.text(fmt(v.pv_prat * ep * 12), 210 - margem, y, { align: 'right' });
+      y += 7;
+    }
+
+    doc.text('Conta Azul inclusa', margem + 2, y);
+    doc.text(v.ca ? 'Sim' : 'Não', 210 - margem, y, { align: 'right' });
+    y += 10;
+
+    // Observações
+    if (obs) {
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.3);
+      doc.line(margem, y, 210 - margem, y); y += 7;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(12, 68, 72);
+      doc.text('OBSERVAÇÕES', margem, y); y += 6;
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(30, 30, 30);
+      doc.setFontSize(9);
+      const obsLines = doc.splitTextToSize(obs, largura);
+      doc.text(obsLines, margem, y);
+      y += obsLines.length * 5 + 6;
+    }
+
+    // Rodapé
+    doc.setDrawColor(12, 68, 72);
+    doc.setLineWidth(0.5);
+    doc.line(margem, 287 - 10, 210 - margem, 287 - 10);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(150, 150, 150);
+    doc.text('Zelo Gestão Financeira · Proposta gerada em ' + new Date().toLocaleDateString('pt-BR'), margem, 287 - 5);
+
+    // 2. Obter blob do PDF
+    const pdfBlob = doc.output('blob');
+
+    // 3. Upload direto para o Drive (multipart — só Drive API v3, sem Docs API)
+    const metaPdf = JSON.stringify({
+      name: nomeArq,
+      mimeType: 'application/pdf',
       parents: [DRIVE_FOLDER_ID],
     });
-    const body = [
-      `--${boundary}`,
-      'Content-Type: application/json; charset=UTF-8',
-      '',
-      metadata,
-      `--${boundary}`,
-      'Content-Type: text/plain; charset=UTF-8',
-      '',
-      texto,
-      `--${boundary}--`,
-    ].join('\r\n');
-
-    const createResp = await fetch(
-      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-      {
-        method: 'POST',
-        headers: {
-          Authorization: 'Bearer ' + token,
-          'Content-Type': `multipart/related; boundary=${boundary}`,
-        },
-        body,
-      }
-    );
-    if (!createResp.ok) throw new Error('Erro ao criar documento: ' + createResp.status);
-    const docData = await createResp.json();
-    const docId   = docData.id;
-
-    // 2. Exportar o Doc como PDF e re-upload na mesma pasta
-    const pdfResp = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${docId}/export?mimeType=application/pdf`,
-      { headers: { Authorization: 'Bearer ' + token } }
-    );
-    if (!pdfResp.ok) throw new Error('Erro ao exportar PDF: ' + pdfResp.status);
-    const pdfBlob = await pdfResp.blob();
-
-    // 3. Upload do PDF com metadados
-    const metaPdf = JSON.stringify({ name: nomeArq, parents: [DRIVE_FOLDER_ID] });
     const formData = new FormData();
     formData.append('metadata', new Blob([metaPdf], { type: 'application/json' }));
     formData.append('file', pdfBlob, nomeArq);
@@ -1289,15 +1373,12 @@ async function salvarGDrive() {
         body: formData,
       }
     );
-    if (!uploadResp.ok) throw new Error('Erro ao fazer upload do PDF: ' + uploadResp.status);
+    if (!uploadResp.ok) {
+      const errBody = await uploadResp.text();
+      throw new Error(`Upload falhou (${uploadResp.status}): ${errBody}`);
+    }
 
-    // 4. Apagar o Doc temporário
-    await fetch(`https://www.googleapis.com/drive/v3/files/${docId}`, {
-      method: 'DELETE',
-      headers: { Authorization: 'Bearer ' + token },
-    });
-
-    // 5. Salvar no histórico local
+    // 4. Registrar no histórico local
     registrarHistoricoLocal(v, c, ep);
 
     showStatus('status-msg', `"${nomeArq}" salvo no Drive ✓`, 'success', false);
