@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Precificador de Propostas — Zelo Gestão Financeira</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --z-teal:       #0C4448;
+    --z-teal-mid:   #1D9E75;
+    --z-teal-light: #E1F5EE;
+    --z-teal-hover: #083235;
+    --z-teal-border:#9FE1CB;
+    --bg:           #F5F6F7;
+    --surface:      #FFFFFF;
+    --surface-2:    #F0F2F3;
+    --border:       rgba(0,0,0,0.10);
+    --border-md:    rgba(0,0,0,0.18);
+    --text-primary: #1A1A1A;
+    --text-secondary:#6B7280;
+    --red:          #E24B4A;
+    --red-light:    #FEF2F2;
+    --amber:        #BA7517;
+    --radius-md:    8px;
+    --radius-lg:    12px;
+    --shadow-sm:    0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+    --shadow-md:    0 4px 12px rgba(0,0,0,.08);
+  }
+
+  body {
+    font-family: 'Quicksand', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  .app { max-width: 960px; margin: 0 auto; }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--z-teal);
+    border-radius: var(--radius-lg);
+    padding: 20px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-md);
+  }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .logo-icon {
+    width: 50px; height: 50px;
+    background: rgba(255,255,255,0.13);
+    border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .logo-text { color: #fff; }
+  .logo-text .brand {
+    font-size: 23px; font-weight: 700;
+    letter-spacing: .18em; text-transform: uppercase; line-height: 1;
+  }
+  .logo-text .tagline {
+    font-size: 11px; font-weight: 400;
+    letter-spacing: .12em; opacity: .7; margin-top: 2px;
+  }
+  .header-right {
+    text-align: right;
+    color: rgba(255,255,255,.65);
+    font-size: 12px; font-weight: 600;
+    letter-spacing: .06em; text-transform: uppercase;
+  }
+  .header-right .version { font-size: 10px; opacity: .5; margin-top: 3px; }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex;
+    border-bottom: 2px solid var(--z-teal);
+    margin-bottom: 1.5rem;
+    background: var(--surface);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding: 0 8px;
+    box-shadow: var(--shadow-sm);
+  }
+  .tab {
+    padding: 12px 18px;
+    font-size: 13px; font-weight: 600;
+    font-family: 'Quicksand', sans-serif;
+    cursor: pointer; border: none; background: transparent;
+    color: var(--text-secondary);
+    letter-spacing: .03em;
+    border-bottom: 2.5px solid transparent;
+    margin-bottom: -2px;
+    transition: color .15s, border-color .15s;
+    white-space: nowrap;
+  }
+  .tab:hover:not(.active) { color: var(--text-primary); }
+  .tab.active { color: var(--z-teal); border-bottom-color: var(--z-teal); }
+  .tab svg { vertical-align: -3px; margin-right: 5px; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ── LAYOUT ── */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  @media (max-width: 700px) {
+    .grid2 { grid-template-columns: 1fr; }
+    .grid3 { grid-template-columns: 1fr 1fr; }
+    .cenario-grid { grid-template-columns: 1fr; }
+    .tabs { overflow-x: auto; }
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.1rem 1.4rem;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .card-accent { border-left: 3px solid var(--z-teal); }
+  .card-title {
+    font-size: 10px; font-weight: 700;
+    color: var(--z-teal);
+    text-transform: uppercase; letter-spacing: .13em;
+    margin-bottom: 14px; padding-bottom: 9px;
+    border-bottom: 1px solid var(--z-teal-light);
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  /* ── FIELDS ── */
+  .field { margin-bottom: 10px; }
+  .field label {
+    display: block;
+    font-size: 11px; font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    letter-spacing: .04em; text-transform: uppercase;
+  }
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 13px; font-weight: 500;
+    font-family: 'Quicksand', sans-serif;
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--text-primary);
+    transition: border-color .15s, box-shadow .15s;
+    appearance: auto;
+  }
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus {
+    outline: none;
+    border-color: var(--z-teal);
+    box-shadow: 0 0 0 3px rgba(12,68,72,.12);
+  }
+  .field input.input-error { border-color: var(--red); background: var(--red-light); }
+  .err-msg {
+    font-size: 11px; color: var(--red);
+    margin-top: 3px; font-weight: 600; display: none;
+  }
+  .field-hint {
+    font-size: 11px; color: var(--text-secondary);
+    margin-top: 3px;
+  }
+
+  /* ── RESULT ITEMS ── */
+  .res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .res-item {
+    background: var(--surface-2);
+    border-radius: var(--radius-md);
+    padding: .7rem 1rem;
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .res-label {
+    font-size: 10px; font-weight: 700;
+    color: var(--text-secondary);
+    letter-spacing: .06em; text-transform: uppercase;
+  }
+  .res-valor { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+
+  .res-item.total-item { background: var(--z-teal-light); grid-column: 1/-1; }
+  .res-item.total-item .res-label { color: var(--z-teal); }
+  .res-item.total-item .res-valor { color: var(--z-teal); font-size: 17px; }
+
+  .res-item.pv-item { background: var(--z-teal); grid-column: 1/-1; }
+  .res-item.pv-item .res-label { color: rgba(255,255,255,.75); }
+  .res-item.pv-item .res-valor { color: #fff; font-size: 22px; }
+
+  .res-item.anual-item {
+    background: var(--z-teal-light);
+    border: 1px solid var(--z-teal-border);
+  }
+  .res-item.anual-item .res-label { color: #0F6E56; }
+  .res-item.anual-item .res-valor { color: #0F6E56; }
+
+  /* ── EBITDA BAR ── */
+  .ebitda-bar {
+    height: 8px; border-radius: 4px;
+    background: var(--surface-2); margin-top: 6px; overflow: hidden;
+  }
+  .ebitda-fill { height: 100%; border-radius: 4px; transition: width .4s, background .3s; }
+  .ebitda-scale {
+    display: flex; justify-content: space-between;
+    margin-top: 4px; font-size: 10px; color: var(--text-secondary);
+  }
+
+  /* ── BUTTONS ── */
+  .btn {
+    padding: 9px 18px;
+    border-radius: var(--radius-md);
+    font-size: 12px; font-weight: 700;
+    font-family: 'Quicksand', sans-serif;
+    cursor: pointer;
+    border: 1.5px solid var(--border-md);
+    background: var(--surface);
+    color: var(--text-primary);
+    letter-spacing: .04em; text-transform: uppercase;
+    transition: all .15s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:hover { background: var(--surface-2); }
+  .btn:active { transform: scale(.98); }
+  .btn.primary { background: var(--z-teal); color: #fff; border-color: var(--z-teal); }
+  .btn.primary:hover { background: var(--z-teal-hover); }
+  .btn.secondary { border-color: var(--z-teal); color: var(--z-teal); }
+  .btn.secondary:hover { background: var(--z-teal-light); }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+  /* ── TABLE ── */
+  .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .tbl th {
+    text-align: left; padding: 9px 12px;
+    font-size: 10px; font-weight: 700; color: var(--z-teal);
+    border-bottom: 2px solid var(--z-teal-light);
+    letter-spacing: .07em; text-transform: uppercase;
+  }
+  .tbl td {
+    padding: 9px 12px;
+    border-bottom: 0.5px solid var(--border);
+    font-weight: 500;
+  }
+  .tbl tr.total-row td {
+    border-bottom: none; font-weight: 700;
+    background: var(--z-teal-light); color: var(--z-teal);
+  }
+
+  /* ── STATUS ── */
+  .status-msg {
+    display: none;
+    align-items: center; gap: 8px;
+    padding: 10px 14px; border-radius: var(--radius-md);
+    font-size: 13px; font-weight: 600; margin-top: 10px;
+  }
+  .status-msg.info    { background: var(--z-teal-light); color: var(--z-teal); }
+  .status-msg.success { background: #E1F5EE; color: #0F6E56; }
+  .status-msg.error   { background: var(--red-light); color: #A32D2D; }
+  .spinner {
+    display: inline-block; width: 14px; height: 14px;
+    border: 2px solid transparent; border-top-color: currentColor;
+    border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── CENÁRIOS ── */
+  .cenario-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .cenario-card {
+    border-radius: var(--radius-lg);
+    padding: 1.1rem 1rem;
+    border: 1.5px solid var(--border-md);
+    background: var(--surface);
+    text-align: center;
+    transition: border-color .2s, box-shadow .2s;
+    box-shadow: var(--shadow-sm);
+  }
+  .cenario-card.destaque {
+    border-color: var(--z-teal);
+    background: var(--z-teal-light);
+    box-shadow: 0 0 0 1px var(--z-teal);
+  }
+  .cenario-titulo {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .1em;
+    color: var(--text-secondary); margin-bottom: 10px;
+  }
+  .cenario-titulo.destaque-txt { color: var(--z-teal); }
+  .cenario-pv-fixo { font-size: 20px; font-weight: 700; color: var(--z-teal); margin-bottom: 6px; }
+  .cenario-ebitda { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .cenario-anual { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+  .cenario-payback { font-size: 11px; color: var(--text-secondary); }
+  .cenario-input {
+    width: 100%; text-align: center;
+    font-size: 18px; font-weight: 700; color: var(--z-teal);
+    border: 1px solid var(--border-md); border-radius: var(--radius-md);
+    padding: 6px 8px; margin-bottom: 8px;
+    font-family: 'Quicksand', sans-serif;
+    background: var(--surface);
+  }
+  .cenario-input:focus { outline: none; border-color: var(--z-teal); box-shadow: 0 0 0 3px rgba(12,68,72,.1); }
+
+  /* ── GRAFICO ── */
+  .grafico-wrap { position: relative; height: 200px; margin-top: 8px; }
+
+  /* ── HISTORICO ── */
+  .hist-card {
+    padding: 13px 16px;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    margin-bottom: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--surface);
+    transition: background .15s;
+    box-shadow: var(--shadow-sm);
+  }
+  .hist-card:hover { background: var(--z-teal-light); }
+  .hist-nome { font-size: 14px; font-weight: 700; }
+  .hist-meta { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+  .hist-pv { font-size: 16px; font-weight: 700; color: var(--z-teal); }
+  .hist-empty {
+    text-align: center; padding: 2.5rem 1rem;
+    color: var(--text-secondary);
+  }
+  .hist-empty svg { opacity: .3; margin-bottom: 10px; }
+
+  /* ── DIVIDER ── */
+  .divider { height: 1px; background: var(--z-teal-light); margin: 14px 0; }
+
+  /* ── BD preview ── */
+  .bd-preview {
+    background: var(--z-teal-light);
+    border-radius: var(--radius-md);
+    padding: .6rem 1rem;
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .bd-preview-label { font-size: 10px; font-weight: 700; color: var(--z-teal); text-transform: uppercase; letter-spacing: .06em; }
+  .bd-preview-val { font-size: 15px; font-weight: 700; color: var(--z-teal); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo-icon">
+        <svg width="34" height="34" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="44" stroke="white" stroke-width="6" fill="none"/>
+          <path d="M28 33 L72 33 L28 67 L72 67" stroke="white" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <div class="brand">ZELO</div>
+        <div class="tagline">gestão financeira</div>
+      </div>
+    </div>
+    <div class="header-right">
+      Precificador de Propostas
+      <div class="version">v3.0 · 2026</div>
+    </div>
+  </header>
+
+  <!-- TABS -->
+  <nav class="tabs" role="tablist">
+    <button class="tab active" role="tab" onclick="showTab('precificacao',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
+      Precificação
+    </button>
+    <button class="tab" role="tab" onclick="showTab('cenarios',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Cenários
+    </button>
+    <button class="tab" role="tab" onclick="showTab('operacao',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Controle diário
+    </button>
+    <button class="tab" role="tab" onclick="showTab('bd',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+      BD Custos
+    </button>
+    <button class="tab" role="tab" onclick="showTab('historico',this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+      Histórico
+    </button>
+  </nav>
+
+  <!-- ══════════════════════════════════════════
+       ABA PRECIFICAÇÃO
+  ══════════════════════════════════════════ -->
+  <div id="sec-precificacao" class="section active" role="tabpanel">
+    <div class="grid2">
+      <!-- COLUNA ESQUERDA -->
+      <div>
+        <div class="card card-accent">
+          <div class="card-title">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Identificação
+          </div>
+          <div class="field">
+            <label>Nome do cliente</label>
+            <input type="text" id="cliente" value="Móveis Desconzi" oninput="calcular()">
+          </div>
+          <div class="grid2" style="gap:8px">
+            <div class="field">
+              <label>Data</label>
+              <input type="date" id="data" oninput="calcular()">
+            </div>
+            <div class="field">
+              <label>Complexidade</label>
+              <select id="complexidade" onchange="calcular()">
+                <option value="1">1 — Simples</option>
+                <option value="2" selected>2 — Média</option>
+                <option value="3">3 — Alta</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Tem Conta Azul?</label>
+            <select id="conta_azul" onchange="calcular()">
+              <option value="sim">Sim — todo contrato</option>
+              <option value="nao">Não</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            Volumes mensais
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div class="field">
+              <label>Lanç. entrada</label>
+              <input type="number" id="lanc_ent" value="10" min="0" oninput="calcular()">
+              <div class="err-msg" id="err_lanc_ent">Informe o tempo por tarefa</div>
+            </div>
+            <div class="field">
+              <label>Lanç. saída</label>
+              <input type="number" id="lanc_sai" value="200" min="0" oninput="calcular()">
+              <div class="err-msg" id="err_lanc_sai">Informe o tempo por tarefa</div>
+            </div>
+            <div class="field">
+              <label>Conc. entradas</label>
+              <input type="number" id="conc_ent" value="10" min="0" oninput="calcular()">
+              <div class="err-msg" id="err_conc_ent">Informe o tempo por tarefa</div>
+            </div>
+            <div class="field">
+              <label>Conc. saídas</label>
+              <input type="number" id="conc_sai" value="250" min="0" oninput="calcular()">
+              <div class="err-msg" id="err_conc_sai">Informe o tempo por tarefa</div>
+            </div>
+            <div class="field">
+              <label>Agendamentos</label>
+              <input type="number" id="agend" value="0" min="0" oninput="calcular()">
+            </div>
+            <div class="field">
+              <label>Hs. implantação</label>
+              <input type="number" id="horas_impl" value="35" min="0" oninput="calcular()">
+            </div>
+            <div class="field">
+              <label>Cartões crédito</label>
+              <input type="number" id="cartoes" value="1" min="0" oninput="calcular()">
+            </div>
+            <div class="field">
+              <label>Contas bancárias</label>
+              <input type="number" id="contas" value="2" min="1" oninput="calcular()">
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Tempo por tarefa (min)
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div class="field">
+              <label>Lanç. entrada</label>
+              <input type="number" id="t_lanc_ent" value="5" min="0" oninput="calcular()">
+              <div class="err-msg" id="err_t_lanc_ent">Obrigatório com volume &gt; 0</div>
+            </div>
+            <div class="field">
+              <label>Lanç. saída</label>
+              <input type="number" id="t_lanc_sai" value="2" min="0" oninput="calcular()">
+              <div class="err-msg" id="err_t_lanc_sai">Obrigatório com volume &gt; 0</div>
+            </div>
+            <div class="field">
+              <label>Conc. entradas</label>
+              <input type="number" id="t_conc_ent" value="2" min="0" oninput="calcular()">
+              <div class="err-msg" id="err_t_conc_ent">Obrigatório com volume &gt; 0</div>
+            </div>
+            <div class="field">
+              <label>Conc. saídas</label>
+              <input type="number" id="t_conc_sai" value="1" min="0" oninput="calcular()">
+              <div class="err-msg" id="err_t_conc_sai">Obrigatório com volume &gt; 0</div>
+            </div>
+            <div class="field">
+              <label>Agendamentos</label>
+              <input type="number" id="t_agend" value="0" min="0" oninput="calcular()">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COLUNA DIREITA -->
+      <div>
+        <div class="card card-accent">
+          <div class="card-title">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            Composição do custo
+          </div>
+          <div class="res-grid">
+            <div class="res-item">
+              <span class="res-label">Operação</span>
+              <span class="res-valor" id="r_operacao">—</span>
+            </div>
+            <div class="res-item">
+              <span class="res-label">Adicional Op.</span>
+              <span class="res-valor" id="r_adicional">—</span>
+            </div>
+            <div class="res-item">
+              <span class="res-label">Análise × complexidade</span>
+              <span class="res-valor" id="r_analise">—</span>
+            </div>
+            <div class="res-item">
+              <span class="res-label">Implantação (÷ 12)</span>
+              <span class="res-valor" id="r_implantacao">—</span>
+            </div>
+            <div class="res-item total-item">
+              <span class="res-label">Total Serviço — custo mensal</span>
+              <span class="res-valor" id="r_total">—</span>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="res-grid">
+            <div class="res-item pv-item">
+              <span class="res-label">PV Sugerido — EBITDA 40%</span>
+              <span class="res-valor" id="r_pv_sug">—</span>
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:12px">
+            <label>PV Praticado (R$)</label>
+            <input type="number" id="pv_praticado" value="2800" min="0" oninput="calcular()">
+          </div>
+
+          <div style="background:var(--surface-2);border-radius:var(--radius-md);padding:.85rem 1rem;margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-size:10px;font-weight:700;color:var(--text-secondary);letter-spacing:.07em;text-transform:uppercase">EBITDA praticado</span>
+              <span style="font-size:19px;font-weight:700" id="r_ebitda">—</span>
+            </div>
+            <div class="ebitda-bar">
+              <div class="ebitda-fill" id="ebitda-fill" style="width:0%"></div>
+            </div>
+            <div class="ebitda-scale">
+              <span>0%</span>
+              <span style="color:var(--z-teal);font-weight:700">meta 40%</span>
+              <span>100%</span>
+            </div>
+          </div>
+
+          <div class="res-grid">
+            <div class="res-item anual-item">
+              <span class="res-label">Receita anual</span>
+              <span class="res-valor" id="r_receita_anual">—</span>
+            </div>
+            <div class="res-item anual-item">
+              <span class="res-label">Margem anual</span>
+              <span class="res-valor" id="r_margem_anual">—</span>
+            </div>
+            <div class="res-item anual-item" style="grid-column:1/-1">
+              <span class="res-label">Payback da implantação</span>
+              <span class="res-valor" id="r_payback">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            Observações
+          </div>
+          <textarea id="obs" style="height:65px;resize:vertical" placeholder="Condições especiais, descontos, contexto..."></textarea>
+          <div class="btn-row">
+            <button class="btn primary" id="btn-drive" onclick="salvarGDrive()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12H2"/><path d="M5 19H2V5l7-3 7 3v3"/><path d="M22 12v7h-7v-7"/><path d="M18.5 9.5L22 12l-3.5 2.5"/></svg>
+              Salvar PDF no Drive
+            </button>
+            <button class="btn secondary" onclick="exportarCSV()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Exportar histórico CSV
+            </button>
+          </div>
+          <div class="status-msg" id="status-msg"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       ABA CENÁRIOS
+  ══════════════════════════════════════════ -->
+  <div id="sec-cenarios" class="section" role="tabpanel">
+    <div class="card card-accent">
+      <div class="card-title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+        Comparador de cenários de preço
+      </div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:18px;font-weight:500">
+        Baseado nos inputs da aba Precificação. Edite os PVs para comparar margens e payback.
+      </p>
+      <div class="cenario-grid">
+        <!-- Conservador -->
+        <div class="cenario-card" id="card-c1">
+          <div class="cenario-titulo">Conservador</div>
+          <input type="number" class="cenario-input" id="pv_c1" placeholder="R$ PV" oninput="calcularCenarios()">
+          <div class="cenario-ebitda" id="ebitda_c1" style="color:var(--text-secondary)">—</div>
+          <div class="cenario-anual" id="anual_c1">—</div>
+          <div class="cenario-payback" id="payback_c1">—</div>
+        </div>
+        <!-- Sugerido -->
+        <div class="cenario-card destaque" id="card-c2">
+          <div class="cenario-titulo destaque-txt">Sugerido (40%)</div>
+          <div class="cenario-pv-fixo" id="pv_c2_display">—</div>
+          <div class="cenario-ebitda" id="ebitda_c2" style="color:var(--z-teal)">EBITDA 40%</div>
+          <div class="cenario-anual" id="anual_c2">—</div>
+          <div class="cenario-payback" id="payback_c2" style="color:var(--z-teal)">—</div>
+        </div>
+        <!-- Praticado -->
+        <div class="cenario-card" id="card-c3">
+          <div class="cenario-titulo">Praticado</div>
+          <input type="number" class="cenario-input" id="pv_c3" placeholder="R$ PV" oninput="calcularCenarios()">
+          <div class="cenario-ebitda" id="ebitda_c3" style="color:var(--text-secondary)">—</div>
+          <div class="cenario-anual" id="anual_c3">—</div>
+          <div class="cenario-payback" id="payback_c3">—</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="card-title" style="margin-top:4px">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Sensibilidade EBITDA × Preço de venda
+      </div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;font-weight:500">Como a margem varia conforme o PV praticado. Linha tracejada = meta de 40%.</p>
+      <div class="grafico-wrap">
+        <canvas id="grafico-sensibilidade" role="img" aria-label="Gráfico de sensibilidade EBITDA por PV praticado. Eixo X: PV em reais. Eixo Y: EBITDA em %."></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       ABA CONTROLE DIÁRIO
+  ══════════════════════════════════════════ -->
+  <div id="sec-operacao" class="section" role="tabpanel">
+    <div class="card">
+      <div class="card-title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Controle diário de operação —
+        <span id="dias_uteis_disp" style="color:var(--text-primary)">21,5</span> dias úteis/mês
+      </div>
+      <div style="overflow-x:auto">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Tarefa</th>
+              <th>Qtd/mês</th>
+              <th>Qtd/dia</th>
+              <th>Min/tarefa</th>
+              <th>Total min/dia</th>
+            </tr>
+          </thead>
+          <tbody id="tabela-diaria-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       ABA BD CUSTOS
+  ══════════════════════════════════════════ -->
+  <div id="sec-bd" class="section" role="tabpanel">
+    <div class="card card-accent">
+      <div class="card-title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+        Base de dados — custos e parâmetros
+      </div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:18px;font-weight:500">
+        Valores editáveis. Alterações recalculam a precificação em tempo real.
+      </p>
+      <div class="grid2">
+        <div>
+          <div class="card-title" style="margin-top:0;font-size:9px">Custos (R$)</div>
+          <div class="field">
+            <label>Salário analista/mês</label>
+            <input type="number" id="bd_sal_analista" value="4129" step="1" oninput="calcular()">
+          </div>
+          <div class="field">
+            <label>Clientes por analista</label>
+            <input type="number" id="bd_clientes_analista" value="15" min="1" step="1" oninput="calcular()">
+          </div>
+          <div class="bd-preview" style="margin-bottom:10px">
+            <span class="bd-preview-label">Custo analista/cliente</span>
+            <span class="bd-preview-val" id="bd_analista_cli_val">—</span>
+          </div>
+          <div class="field">
+            <label>Implantador (R$/h)</label>
+            <input type="number" id="bd_implantador" value="23.44" step="0.01" oninput="calcular()">
+          </div>
+          <div class="field">
+            <label>Operador (R$/h)</label>
+            <input type="number" id="bd_operador" value="21.66" step="0.01" oninput="calcular()">
+          </div>
+          <div class="field">
+            <label>Custo CA/mês (R$)</label>
+            <input type="number" id="bd_ca" value="100" oninput="calcular()">
+          </div>
+          <div class="field">
+            <label>Dias úteis no mês</label>
+            <input type="number" id="bd_dias" value="21.5" step="0.5" oninput="calcular()">
+          </div>
+        </div>
+        <div>
+          <div class="card-title" style="margin-top:0;font-size:9px">Margens e taxas (%)</div>
+          <div class="field">
+            <label>Despesas fixas</label>
+            <input type="number" id="bd_desp_fixas" value="13" step="0.1" oninput="calcular()">
+          </div>
+          <div class="field">
+            <label>Imposto</label>
+            <input type="number" id="bd_imposto" value="13" step="0.1" oninput="calcular()">
+          </div>
+          <div class="field">
+            <label>Comissão analista</label>
+            <input type="number" id="bd_comissao" value="3" step="0.1" oninput="calcular()">
+          </div>
+          <div class="field">
+            <label>EBITDA desejado</label>
+            <input type="number" id="bd_ebitda" value="40" step="0.1" oninput="calcular()">
+          </div>
+          <div class="field">
+            <label>Horas/conta bancária</label>
+            <input type="number" id="bd_h_conta" value="1" step="0.5" oninput="calcular()">
+          </div>
+          <div class="field">
+            <label>Horas/cartão</label>
+            <input type="number" id="bd_h_cartao" value="1.5" step="0.5" oninput="calcular()">
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="card-title" style="font-size:9px">Multiplicadores de complexidade</div>
+      <div class="grid3" style="margin-top:8px">
+        <div class="field">
+          <label>Complexidade 1</label>
+          <input type="number" id="bd_c1" value="1.0" step="0.1" oninput="calcular()">
+        </div>
+        <div class="field">
+          <label>Complexidade 2</label>
+          <input type="number" id="bd_c2" value="1.2" step="0.1" oninput="calcular()">
+        </div>
+        <div class="field">
+          <label>Complexidade 3</label>
+          <input type="number" id="bd_c3" value="1.5" step="0.1" oninput="calcular()">
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn primary" onclick="salvarBD()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Salvar configurações
+        </button>
+        <button class="btn" onclick="resetBD()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3"/></svg>
+          Restaurar padrão
+        </button>
+      </div>
+      <div class="status-msg" id="status-bd"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       ABA HISTÓRICO
+  ══════════════════════════════════════════ -->
+  <div id="sec-historico" class="section" role="tabpanel">
+    <div class="status-msg info" id="historico-status" style="display:flex;margin-bottom:16px">
+      <span class="spinner"></span><span>Carregando histórico...</span>
+    </div>
+    <div id="historico-lista"></div>
+    <div class="btn-row" style="margin-top:4px">
+      <button class="btn secondary" onclick="carregarHistorico()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3"/></svg>
+        Atualizar
+      </button>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+// ─── Estado global ───────────────────────────────────────────────────────────
+let graficoInstance = null;
+let _state = null;
+
+// ─── Navegação ───────────────────────────────────────────────────────────────
+function showTab(tab, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('sec-' + tab).classList.add('active');
+  el.classList.add('active');
+  if (tab === 'historico') carregarHistorico();
+  if (tab === 'cenarios')  calcularCenarios();
+}
+
+// ─── BD ──────────────────────────────────────────────────────────────────────
+function getBD() {
+  const sal  = parseFloat(document.getElementById('bd_sal_analista').value) || 4129;
+  const nCli = parseFloat(document.getElementById('bd_clientes_analista').value) || 15;
+  return {
+    sal_analista: sal,
+    nCli,
+    analista_cli: sal / nCli,
+    implantador:  parseFloat(document.getElementById('bd_implantador').value) || 23.44,
+    operador:     parseFloat(document.getElementById('bd_operador').value) || 21.66,
+    ca:           parseFloat(document.getElementById('bd_ca').value) || 100,
+    dias:         parseFloat(document.getElementById('bd_dias').value) || 21.5,
+    desp_fixas:   (parseFloat(document.getElementById('bd_desp_fixas').value) || 13) / 100,
+    imposto:      (parseFloat(document.getElementById('bd_imposto').value) || 13) / 100,
+    comissao:     (parseFloat(document.getElementById('bd_comissao').value) || 3) / 100,
+    ebitda:       (parseFloat(document.getElementById('bd_ebitda').value) || 40) / 100,
+    h_conta:      parseFloat(document.getElementById('bd_h_conta').value) || 1,
+    h_cartao:     parseFloat(document.getElementById('bd_h_cartao').value) || 1.5,
+    c1:           parseFloat(document.getElementById('bd_c1').value) || 1.0,
+    c2:           parseFloat(document.getElementById('bd_c2').value) || 1.2,
+    c3:           parseFloat(document.getElementById('bd_c3').value) || 1.5,
+  };
+}
+
+// ─── Inputs ──────────────────────────────────────────────────────────────────
+function getInputs() {
+  return {
+    lanc_ent:   parseFloat(document.getElementById('lanc_ent').value) || 0,
+    lanc_sai:   parseFloat(document.getElementById('lanc_sai').value) || 0,
+    conc_ent:   parseFloat(document.getElementById('conc_ent').value) || 0,
+    conc_sai:   parseFloat(document.getElementById('conc_sai').value) || 0,
+    agend:      parseFloat(document.getElementById('agend').value) || 0,
+    t_le:       parseFloat(document.getElementById('t_lanc_ent').value) || 0,
+    t_ls:       parseFloat(document.getElementById('t_lanc_sai').value) || 0,
+    t_ce:       parseFloat(document.getElementById('t_conc_ent').value) || 0,
+    t_cs:       parseFloat(document.getElementById('t_conc_sai').value) || 0,
+    t_ag:       parseFloat(document.getElementById('t_agend').value) || 0,
+    horas_impl: parseFloat(document.getElementById('horas_impl').value) || 0,
+    cartoes:    parseFloat(document.getElementById('cartoes').value) || 0,
+    contas:     parseFloat(document.getElementById('contas').value) || 1,
+    cx:         parseInt(document.getElementById('complexidade').value) || 1,
+    ca:         document.getElementById('conta_azul').value === 'sim',
+    pv_prat:    parseFloat(document.getElementById('pv_praticado').value) || 0,
+  };
+}
+
+// ─── Validação ───────────────────────────────────────────────────────────────
+function validar(inputId, errId, condicao) {
+  const el  = document.getElementById(inputId);
+  const err = document.getElementById(errId);
+  if (!el || !err) return true;
+  if (condicao) {
+    el.classList.add('input-error');
+    err.style.display = 'block';
+    return false;
+  }
+  el.classList.remove('input-error');
+  err.style.display = 'none';
+  return true;
+}
+
+// ─── Motor de cálculo ────────────────────────────────────────────────────────
+function computar(v, bd) {
+  validar('lanc_ent', 'err_lanc_ent', v.lanc_ent > 0 && v.t_le === 0);
+  validar('lanc_sai', 'err_lanc_sai', v.lanc_sai > 0 && v.t_ls === 0);
+  validar('conc_ent', 'err_conc_ent', v.conc_ent > 0 && v.t_ce === 0);
+  validar('conc_sai', 'err_conc_sai', v.conc_sai > 0 && v.t_cs === 0);
+
+  const sumproduct = v.lanc_ent*v.t_le + v.lanc_sai*v.t_ls + v.conc_ent*v.t_ce + v.conc_sai*v.t_cs + v.agend*v.t_ag;
+  const operacao   = (sumproduct / 60) * bd.operador;
+
+  const p1 = (v.contas === 1) ? 0 : v.contas * bd.h_conta * bd.operador;
+  const p2 = v.cartoes * bd.h_cartao * bd.operador;
+  const mult = v.cx === 1 ? bd.c1 : v.cx === 2 ? bd.c2 : bd.c3;
+  const p3   = v.cx === 1 ? 0 : operacao * mult - operacao;
+  const adicional = p1 + p2 + p3;
+
+  const analise = bd.analista_cli * mult;
+
+  const implantacao      = v.horas_impl * bd.implantador / 12;
+  const custo_impl_bruto = v.horas_impl * bd.implantador;
+
+  const total    = operacao + adicional + analise + implantacao;
+  const deducoes = bd.desp_fixas + bd.imposto + bd.comissao;
+  const divisor  = 1 - deducoes - bd.ebitda;
+  const ca_custo = v.ca ? bd.ca : 0;
+  const pv_sug   = divisor > 0 ? (total + ca_custo) / divisor : 0;
+
+  return { operacao, adicional, analise, implantacao, custo_impl_bruto, total, pv_sug, deducoes, ca_custo, mult };
+}
+
+function calcEBITDA(pv, total, deducoes, ca_custo) {
+  if (!pv || pv <= 0) return null;
+  return (pv * (1 - deducoes) - total - ca_custo) / pv;
+}
+
+function calcPayback(custo_impl_bruto, pv, ebitda_prat) {
+  if (!pv || ebitda_prat <= 0) return null;
+  return custo_impl_bruto / (pv * ebitda_prat);
+}
+
+// ─── Formatação ──────────────────────────────────────────────────────────────
+function fmt(n) {
+  return 'R$ ' + n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+function pct(n) { return (n * 100).toFixed(1).replace('.', ',') + ' %'; }
+function cor(v, meta) {
+  return v >= meta ? '#1D9E75' : v >= meta * 0.7 ? '#BA7517' : '#E24B4A';
+}
+function fmtPayback(pb) {
+  if (pb === null) return '—';
+  if (pb < 1)  return 'Dentro do 1º mês';
+  if (pb > 12) return '⚠ ' + pb.toFixed(1).replace('.', ',') + ' meses (além do contrato)';
+  return 'Mês ' + Math.ceil(pb) + ' de 12';
+}
+
+// ─── Calcular principal ──────────────────────────────────────────────────────
+function calcular() {
+  const bd = getBD();
+  const v  = getInputs();
+  const c  = computar(v, bd);
+
+  // Preview BD
+  const elAC = document.getElementById('bd_analista_cli_val');
+  if (elAC) elAC.textContent = fmt(bd.analista_cli);
+
+  // Resultados
+  document.getElementById('r_operacao').textContent    = fmt(c.operacao);
+  document.getElementById('r_adicional').textContent   = fmt(c.adicional);
+  document.getElementById('r_analise').textContent     = fmt(c.analise);
+  document.getElementById('r_implantacao').textContent = fmt(c.implantacao);
+  document.getElementById('r_total').textContent       = fmt(c.total);
+  document.getElementById('r_pv_sug').textContent      = fmt(c.pv_sug);
+
+  const ep = calcEBITDA(v.pv_prat, c.total, c.deducoes, c.ca_custo);
+  const epEl = document.getElementById('r_ebitda');
+  if (ep !== null) {
+    epEl.textContent = pct(ep);
+    epEl.style.color = cor(ep, bd.ebitda);
+    const fill = document.getElementById('ebitda-fill');
+    fill.style.width      = Math.max(0, Math.min(100, ep * 100)) + '%';
+    fill.style.background = cor(ep, bd.ebitda);
+  } else {
+    epEl.textContent = '—';
+  }
+
+  // Anual + Payback
+  const receita_anual = v.pv_prat * 12;
+  const margem_anual  = ep !== null ? v.pv_prat * ep * 12 : null;
+  const pb = ep !== null ? calcPayback(c.custo_impl_bruto, v.pv_prat, ep) : null;
+
+  document.getElementById('r_receita_anual').textContent = v.pv_prat > 0 ? fmt(receita_anual) : '—';
+  document.getElementById('r_margem_anual').textContent  = margem_anual !== null ? fmt(margem_anual) : '—';
+  const pbEl = document.getElementById('r_payback');
+  pbEl.textContent  = fmtPayback(pb);
+  pbEl.style.color  = pb !== null && pb > 12 ? '#E24B4A' : '#0F6E56';
+
+  // Tabela diária
+  const dias = bd.dias;
+  document.getElementById('dias_uteis_disp').textContent = dias.toString().replace('.', ',');
+  const tarefas = [
+    { nome: 'Lanç. entradas', qtd: v.lanc_ent, min: v.t_le },
+    { nome: 'Lanç. saídas',   qtd: v.lanc_sai, min: v.t_ls },
+    { nome: 'Conc. entradas', qtd: v.conc_ent, min: v.t_ce },
+    { nome: 'Conc. saídas',   qtd: v.conc_sai, min: v.t_cs },
+    { nome: 'Agendamentos',   qtd: v.agend,    min: v.t_ag  },
+  ];
+  let totMin = 0;
+  let rows = tarefas.map(t => {
+    const dia = t.qtd / dias, md = dia * t.min;
+    totMin += md;
+    return `<tr>
+      <td>${t.nome}</td>
+      <td>${t.qtd}</td>
+      <td>${dia.toFixed(2).replace('.', ',')}</td>
+      <td>${t.min}</td>
+      <td>${md.toFixed(2).replace('.', ',')} min</td>
+    </tr>`;
+  }).join('');
+
+  // Adicional Operação: converte o custo em R$ de volta para minutos/dia
+  // Fórmula da planilha: adicional_R$ / custo_hora_operador / 22 * 60
+  const adicional_min_dia = c.adicional / bd.operador / 22 * 60;
+  totMin += adicional_min_dia;
+  rows += `<tr>
+    <td>Adicional Operação</td>
+    <td>—</td>
+    <td>—</td>
+    <td>—</td>
+    <td>${adicional_min_dia.toFixed(2).replace('.', ',')} min</td>
+  </tr>`;
+
+  rows += `<tr class="total-row">
+    <td colspan="3"><strong>Total</strong></td>
+    <td></td>
+    <td><strong>${totMin.toFixed(2).replace('.', ',')} min</strong></td>
+  </tr>`;
+  document.getElementById('tabela-diaria-body').innerHTML = rows;
+
+  _state = { v, bd, c, ep };
+  calcularCenarios();
+}
+
+// ─── Cenários ────────────────────────────────────────────────────────────────
+function calcularCenarios() {
+  if (!_state) return;
+  const { v, bd, c } = _state;
+
+  // Sugerido (fixo)
+  document.getElementById('pv_c2_display').textContent = fmt(c.pv_sug);
+  const e2  = calcEBITDA(c.pv_sug, c.total, c.deducoes, c.ca_custo);
+  const pb2 = e2 !== null ? calcPayback(c.custo_impl_bruto, c.pv_sug, e2) : null;
+  document.getElementById('ebitda_c2').textContent  = e2 !== null ? 'EBITDA ' + pct(e2) : '—';
+  document.getElementById('anual_c2').textContent   = c.pv_sug > 0 ? fmt(c.pv_sug * 12) + '/ano' : '—';
+  document.getElementById('payback_c2').textContent = fmtPayback(pb2);
+
+  // Pré-preencher cenários editáveis se vazios
+  const pv1el = document.getElementById('pv_c1');
+  const pv3el = document.getElementById('pv_c3');
+  if (!pv1el.value && c.pv_sug > 0) pv1el.value = Math.round(c.pv_sug * 0.85);
+  if (!pv3el.value) pv3el.value = v.pv_prat > 0 ? v.pv_prat : Math.round(c.pv_sug * 1.15);
+
+  [['pv_c1','ebitda_c1','anual_c1','payback_c1'],
+   ['pv_c3','ebitda_c3','anual_c3','payback_c3']].forEach(([pvId, eId, aId, pbId]) => {
+    const pv = parseFloat(document.getElementById(pvId).value) || 0;
+    const e  = calcEBITDA(pv, c.total, c.deducoes, c.ca_custo);
+    const pb = e !== null ? calcPayback(c.custo_impl_bruto, pv, e) : null;
+    const eEl = document.getElementById(eId);
+    eEl.textContent = e !== null ? 'EBITDA ' + pct(e) : '—';
+    eEl.style.color = e !== null ? cor(e, bd.ebitda) : 'var(--text-secondary)';
+    document.getElementById(aId).textContent  = pv > 0 ? fmt(pv * 12) + '/ano' : '—';
+    document.getElementById(pbId).textContent = fmtPayback(pb);
+  });
+
+  atualizarGrafico(c, bd);
+}
+
+// ─── Gráfico ─────────────────────────────────────────────────────────────────
+function atualizarGrafico(c, bd) {
+  const canvas = document.getElementById('grafico-sensibilidade');
+  if (!canvas || typeof Chart === 'undefined') return;
+
+  const base = c.pv_sug || 2000;
+  const labels = [], data = [];
+  for (let i = 0; i <= 24; i++) {
+    const pv = base * (0.4 + 1.6 * (i / 24));
+    const e  = calcEBITDA(pv, c.total, c.deducoes, c.ca_custo);
+    labels.push('R$' + Math.round(pv / 50) * 50);
+    data.push(e !== null ? parseFloat((e * 100).toFixed(1)) : null);
+  }
+
+  const meta = bd.ebitda * 100;
+  if (graficoInstance) graficoInstance.destroy();
+  graficoInstance = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'EBITDA (%)',
+          data,
+          borderColor: '#0C4448',
+          backgroundColor: 'rgba(12,68,72,0.07)',
+          fill: true, tension: .35,
+          pointRadius: 2, pointBackgroundColor: '#0C4448',
+          borderWidth: 2,
+        },
+        {
+          label: 'Meta ' + meta + '%',
+          data: labels.map(() => meta),
+          borderColor: '#1D9E75',
+          borderDash: [7, 4],
+          borderWidth: 1.5,
+          pointRadius: 0, fill: false,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ctx.datasetIndex === 0
+              ? 'EBITDA: ' + ctx.raw?.toFixed(1) + '%'
+              : 'Meta: ' + ctx.raw + '%'
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { autoSkip: true, maxTicksLimit: 9, maxRotation: 40, font: { size: 10, family: 'Quicksand' }, color: '#6B7280' },
+          grid:  { color: 'rgba(0,0,0,.05)' }
+        },
+        y: {
+          ticks: { callback: v => v + '%', font: { size: 10, family: 'Quicksand' }, color: '#6B7280' },
+          grid:  { color: 'rgba(0,0,0,.05)' }
+        }
+      }
+    }
+  });
+}
+
+// ─── Status helper ───────────────────────────────────────────────────────────
+function showStatus(id, msg, type, loading) {
+  const el = document.getElementById(id);
+  el.style.display = 'flex';
+  el.className = 'status-msg ' + type;
+  el.innerHTML = (loading ? '<span class="spinner"></span>' : '') + `<span>${msg}</span>`;
+}
+
+// ─── Google OAuth 2.0 ────────────────────────────────────────────────────────
+const GOOG_CLIENT_ID = '213080647345-24c1t06bmqg8ddplbr1oe1755926gn75.apps.googleusercontent.com';
+const DRIVE_FOLDER_ID = '1ZpMwhJE-ndqyV2J1kMu6CLtTqs4cW8N_';
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+
+let _accessToken = null;
+let _tokenExpiry  = 0;
+
+// Solicita token via Google Identity Services (popup)
+function obterToken() {
+  return new Promise((resolve, reject) => {
+    // Token ainda válido
+    if (_accessToken && Date.now() < _tokenExpiry) { resolve(_accessToken); return; }
+
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: GOOG_CLIENT_ID,
+      scope: DRIVE_SCOPE,
+      callback: (resp) => {
+        if (resp.error) { reject(new Error(resp.error)); return; }
+        _accessToken = resp.access_token;
+        _tokenExpiry  = Date.now() + (resp.expires_in - 60) * 1000;
+        resolve(_accessToken);
+      },
+    });
+    client.requestAccessToken();
+  });
+}
+
+// ─── Gerar texto da proposta ─────────────────────────────────────────────────
+function gerarTextoProposta(cliente, v, c, ep, obs) {
+  const d = document.getElementById('data').value || new Date().toLocaleDateString('pt-BR');
+  const fmtR = n => 'R$ ' + n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+  return `PROPOSTA COMERCIAL
+Zelo Gestão Financeira
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Cliente:  ${cliente}
+Data:     ${d}
+${obs ? 'Obs:      ' + obs : ''}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMPOSIÇÃO DE SERVIÇOS — MENSALIDADE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Operação financeira         ${fmtR(c.operacao)}
+  Adicional operacional       ${fmtR(c.adicional)}
+  Análise gerencial           ${fmtR(c.analise)}
+  Implantação (÷ 12 meses)   ${fmtR(c.implantacao)}
+  ─────────────────────────────────────────
+  Total custo do serviço      ${fmtR(c.total)}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PREÇO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  PV sugerido (EBITDA 40%)    ${fmtR(c.pv_sug)}
+  PV praticado                ${fmtR(v.pv_prat)}
+  EBITDA praticado            ${ep !== null ? (ep * 100).toFixed(1).replace('.', ',') + ' %' : '—'}
+
+  Receita anual               ${fmtR(v.pv_prat * 12)}
+  Conta Azul inclusa          ${v.ca ? 'Sim' : 'Não'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Proposta gerada pelo Precificador Zelo Gestão Financeira
+`;
+}
+
+// ─── Google Drive — salvar PDF ───────────────────────────────────────────────
+async function salvarGDrive() {
+  if (!_state) return;
+  const { v, c, ep } = _state;
+  const cliente = document.getElementById('cliente').value || 'Cliente';
+  const obs     = document.getElementById('obs').value;
+  const dataStr = document.getElementById('data').value || new Date().toISOString().split('T')[0];
+  const nomeArq = `Proposta_Zelo_${cliente.replace(/\s+/g, '_')}_${dataStr}.pdf`;
+
+  showStatus('status-msg', 'Conectando ao Google Drive…', 'info', true);
+
+  let token;
+  try {
+    token = await obterToken();
+  } catch (e) {
+    showStatus('status-msg', 'Autenticação cancelada ou falhou.', 'error', false);
+    return;
+  }
+
+  showStatus('status-msg', 'Gerando e salvando PDF no Drive…', 'info', true);
+
+  try {
+    const texto = gerarTextoProposta(cliente, v, c, ep, obs);
+
+    // 1. Criar Google Doc com o conteúdo (Drive API — upload multipart)
+    const boundary = 'zelo_boundary_' + Date.now();
+    const metadata = JSON.stringify({
+      name: nomeArq.replace('.pdf', ''),
+      mimeType: 'application/vnd.google-apps.document',
+      parents: [DRIVE_FOLDER_ID],
+    });
+    const body = [
+      `--${boundary}`,
+      'Content-Type: application/json; charset=UTF-8',
+      '',
+      metadata,
+      `--${boundary}`,
+      'Content-Type: text/plain; charset=UTF-8',
+      '',
+      texto,
+      `--${boundary}--`,
+    ].join('\r\n');
+
+    const createResp = await fetch(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + token,
+          'Content-Type': `multipart/related; boundary=${boundary}`,
+        },
+        body,
+      }
+    );
+    if (!createResp.ok) throw new Error('Erro ao criar documento: ' + createResp.status);
+    const docData = await createResp.json();
+    const docId   = docData.id;
+
+    // 2. Exportar o Doc como PDF e re-upload na mesma pasta
+    const pdfResp = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${docId}/export?mimeType=application/pdf`,
+      { headers: { Authorization: 'Bearer ' + token } }
+    );
+    if (!pdfResp.ok) throw new Error('Erro ao exportar PDF: ' + pdfResp.status);
+    const pdfBlob = await pdfResp.blob();
+
+    // 3. Upload do PDF com metadados
+    const metaPdf = JSON.stringify({ name: nomeArq, parents: [DRIVE_FOLDER_ID] });
+    const formData = new FormData();
+    formData.append('metadata', new Blob([metaPdf], { type: 'application/json' }));
+    formData.append('file', pdfBlob, nomeArq);
+
+    const uploadResp = await fetch(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+      {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token },
+        body: formData,
+      }
+    );
+    if (!uploadResp.ok) throw new Error('Erro ao fazer upload do PDF: ' + uploadResp.status);
+
+    // 4. Apagar o Doc temporário
+    await fetch(`https://www.googleapis.com/drive/v3/files/${docId}`, {
+      method: 'DELETE',
+      headers: { Authorization: 'Bearer ' + token },
+    });
+
+    // 5. Salvar no histórico local
+    registrarHistoricoLocal(v, c, ep);
+
+    showStatus('status-msg', `"${nomeArq}" salvo no Drive ✓`, 'success', false);
+  } catch (e) {
+    showStatus('status-msg', 'Erro: ' + e.message, 'error', false);
+  }
+}
+
+// ─── Histórico local ─────────────────────────────────────────────────────────
+function getHistorico() {
+  try { return JSON.parse(localStorage.getItem('zelo_historico') || '[]'); } catch { return []; }
+}
+
+function registrarHistoricoLocal(v, c, ep) {
+  const hist = getHistorico();
+  hist.unshift({
+    cliente:     document.getElementById('cliente').value,
+    data:        document.getElementById('data').value,
+    operacao:    c.operacao,
+    adicional:   c.adicional,
+    analise:     c.analise,
+    implantacao: c.implantacao,
+    total:       c.total,
+    pv_sug:      c.pv_sug,
+    pv_prat:     v.pv_prat,
+    ebitda_prat: ep,
+    conta_azul:  v.ca,
+    ts:          Date.now(),
+  });
+  localStorage.setItem('zelo_historico', JSON.stringify(hist.slice(0, 200)));
+}
+
+// ─── Exportar histórico como CSV ─────────────────────────────────────────────
+function exportarCSV() {
+  const hist = getHistorico();
+  if (!hist.length) {
+    alert('Nenhum orçamento no histórico ainda. Salve uma proposta primeiro.');
+    return;
+  }
+
+  const cabecalho = [
+    'Data', 'Cliente', 'Operação', 'Adicional Op.',
+    'Análise', 'Implantação (÷12)', 'Total Serviço',
+    'PV Sugerido', 'PV Praticado', 'EBITDA Praticado (%)', 'Conta Azul'
+  ];
+
+  const linhas = hist.map(h => [
+    h.data || '',
+    `"${(h.cliente || '').replace(/"/g, '""')}"`,
+    (h.operacao    || 0).toFixed(2).replace('.', ','),
+    (h.adicional   || 0).toFixed(2).replace('.', ','),
+    (h.analise     || 0).toFixed(2).replace('.', ','),
+    (h.implantacao || 0).toFixed(2).replace('.', ','),
+    (h.total       || 0).toFixed(2).replace('.', ','),
+    (h.pv_sug      || 0).toFixed(2).replace('.', ','),
+    (h.pv_prat     || 0).toFixed(2).replace('.', ','),
+    h.ebitda_prat != null ? ((h.ebitda_prat * 100).toFixed(1).replace('.', ',')) : '',
+    h.conta_azul ? 'Sim' : 'Não',
+  ].join(';'));
+
+  const csv = '\uFEFF' + cabecalho.join(';') + '\n' + linhas.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `Historico_Propostas_Zelo_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── Carregar histórico na aba ────────────────────────────────────────────────
+function carregarHistorico() {
+  const st = document.getElementById('historico-status');
+  st.style.display = 'flex';
+  const hist = getHistorico();
+  st.style.display = 'none';
+  const lista = document.getElementById('historico-lista');
+  if (!hist.length) {
+    lista.innerHTML = `<div class="hist-empty">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <p style="font-size:14px;font-weight:700;margin-bottom:4px">Nenhum orçamento registrado</p>
+      <p style="font-size:13px">Salve uma proposta no Drive para ela aparecer aqui.</p>
+    </div>`;
+    return;
+  }
+  lista.innerHTML = hist.map(h => `
+    <div class="hist-card">
+      <div>
+        <div class="hist-nome">${h.cliente || '—'}</div>
+        <div class="hist-meta">${h.data || '—'} · EBITDA ${((h.ebitda_prat || 0) * 100).toFixed(1)}% · ${h.conta_azul ? 'Conta Azul' : 'Sem CA'}</div>
+      </div>
+      <div class="hist-pv">${fmt(h.pv_prat || 0)}</div>
+    </div>`).join('');
+}
+
+// ─── BD actions ──────────────────────────────────────────────────────────────
+function salvarBD() {
+  calcular();
+  showStatus('status-bd', 'Configurações salvas ✓', 'success', false);
+  setTimeout(() => { document.getElementById('status-bd').style.display = 'none'; }, 3000);
+}
+
+function resetBD() {
+  const defaults = {
+    bd_sal_analista: 4129, bd_clientes_analista: 15,
+    bd_implantador: 23.44, bd_operador: 21.66,
+    bd_ca: 100, bd_dias: 21.5,
+    bd_desp_fixas: 13, bd_imposto: 13,
+    bd_comissao: 3, bd_ebitda: 40,
+    bd_h_conta: 1, bd_h_cartao: 1.5,
+    bd_c1: 1.0, bd_c2: 1.2, bd_c3: 1.5
+  };
+  Object.entries(defaults).forEach(([id, val]) => {
+    document.getElementById(id).value = val;
+  });
+  calcular();
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+document.getElementById('data').valueAsDate = new Date();
+calcular();
+</script>
+</body>
+</html>
