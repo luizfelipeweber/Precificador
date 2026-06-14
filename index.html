@@ -618,6 +618,8 @@ async function gerarPropostaPDF() {
   .hist-nome { font-size: 14px; font-weight: 700; }
   .hist-meta { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
   .hist-pv { font-size: 16px; font-weight: 700; color: var(--z-teal); }
+  .hist-del { background: none; border: none; cursor: pointer; color: var(--text-secondary); padding: 4px 6px; border-radius: 4px; line-height: 1; }
+  .hist-del:hover { color: #e53935; background: #ffeaea; }
   .hist-empty {
     text-align: center; padding: 2.5rem 1rem;
     color: var(--text-secondary);
@@ -1875,14 +1877,24 @@ function carregarHistorico() {
     </div>`;
     return;
   }
-  lista.innerHTML = hist.map(h => `
+  lista.innerHTML = hist.map((h, i) => `
     <div class="hist-card">
       <div>
         <div class="hist-nome">${h.cliente || '—'}</div>
         <div class="hist-meta">${h.data || '—'} · EBITDA ${((h.ebitda_prat || 0) * 100).toFixed(1)}% · ${h.conta_azul ? 'Conta Azul' : 'Sem CA'}</div>
       </div>
       <div class="hist-pv">${fmt(h.pv_prat || 0)}</div>
+      <button class="hist-del" title="Apagar" onclick="apagarHistorico(${i})">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      </button>
     </div>`).join('');
+}
+
+function apagarHistorico(i) {
+  const hist = getHistorico();
+  hist.splice(i, 1);
+  localStorage.setItem('zelo_historico', JSON.stringify(hist));
+  carregarHistorico();
 }
 
 // ─── BD actions ──────────────────────────────────────────────────────────────
