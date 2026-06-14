@@ -84,6 +84,7 @@ function getExtras(id) {
 }
 
 async function gerarPropostaPDF() {
+  showStatus('status-proposta','Preparando…','info',true);
   if (!_state) calcular();
   const {v, c, ep} = _state;
 
@@ -1194,6 +1195,7 @@ function showTab(tab, el) {
   el.classList.add('active');
   if (tab === 'historico') carregarHistorico();
   if (tab === 'cenarios')  calcularCenarios();
+  if (tab === 'proposta')  { renderChecks(); sincProposta(); }
 }
 
 // ─── BD ──────────────────────────────────────────────────────────────────────
@@ -1906,7 +1908,6 @@ function resetBD() {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 document.getElementById('data').valueAsDate = new Date();
-renderChecks();
 calcular();
 </script>
 </body>
