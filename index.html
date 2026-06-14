@@ -122,9 +122,9 @@ async function gerarPropostaPDF() {
     const {jsPDF} = window.jspdf;
     const doc = new jsPDF({unit:'mm',format:'a4'});
     doc.addFileToVFS('Quicksand-Regular.ttf', QUICKSAND_NORMAL_B64);
-    doc.addFont('Quicksand-Regular.ttf', 'Quicksand', 'normal');
+    doc.addFont('Quicksand-Regular.ttf', 'Quicksand', 'normal', 'Identity-H');
     doc.addFileToVFS('Quicksand-Bold.ttf', QUICKSAND_BOLD_B64);
-    doc.addFont('Quicksand-Bold.ttf', 'Quicksand', 'bold');
+    doc.addFont('Quicksand-Bold.ttf', 'Quicksand', 'bold', 'Identity-H');
     const M=18, W=210-M*2, PB=285;
     let y=0;
 
