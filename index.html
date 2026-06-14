@@ -106,7 +106,7 @@ async function gerarPropostaPDF() {
   const valDate = new Date(baseDate); valDate.setDate(valDate.getDate()+30);
   const dataValidade = valDate.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
   const dataStr = dataRaw || new Date().toISOString().split('T')[0];
-  const nomeArq = 'Proposta_Zelo_' + nome.replace(/\s+/g,'_') + '_' + dataStr + '.pdf';
+  const nomeArq = 'Proposta_Zelo_' + nome.replace(/\s+/g,'_') + '_' + dataStr + '.pdf'; // aba Proposta
 
   showStatus('status-proposta','Conectando ao Google Drive…','info',true);
   let token;
@@ -280,7 +280,7 @@ async function gerarPropostaPDF() {
 
     // Upload Drive
     const pdfBlob=doc.output('blob');
-    const meta=JSON.stringify({name:nomeArq,mimeType:'application/pdf',parents:[DRIVE_FOLDER_ID]});
+    const meta=JSON.stringify({name:nomeArq,mimeType:'application/pdf',parents:[DRIVE_FOLDER_PROPOSTA_ID]});
     const fd=new FormData();
     fd.append('metadata',new Blob([meta],{type:'application/json'}));
     fd.append('file',pdfBlob,nomeArq);
@@ -1513,7 +1513,8 @@ function showStatus(id, msg, type, loading) {
 
 // ─── Google OAuth 2.0 ────────────────────────────────────────────────────────
 const GOOG_CLIENT_ID = '213080647345-24c1t06bmqg8ddplbr1oe1755926gn75.apps.googleusercontent.com';
-const DRIVE_FOLDER_ID = '1ZpMwhJE-ndqyV2J1kMu6CLtTqs4cW8N_';
+const DRIVE_FOLDER_ORCAMENTO_ID = '1ZpMwhJE-ndqyV2J1kMu6CLtTqs4cW8N_';
+const DRIVE_FOLDER_PROPOSTA_ID  = '1tH9fNe6hgt0Kwh-nSGn1C9u1zmiSDA2F';
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive';
 
 let _accessToken = null;
@@ -1547,7 +1548,7 @@ async function salvarGDrive() {
   const cliente = document.getElementById('cliente').value || 'Cliente';
   const obs     = document.getElementById('obs').value;
   const dataStr = document.getElementById('data').value || new Date().toISOString().split('T')[0];
-  const nomeArq = `Proposta_Zelo_${cliente.replace(/\s+/g, '_')}_${dataStr}.pdf`;
+  const nomeArq = `Orcamento_Zelo_${cliente.replace(/\s+/g, '_')}_${dataStr}.pdf`;
 
   showStatus('status-msg', 'Conectando ao Google Drive…', 'info', true);
 
@@ -1775,7 +1776,7 @@ async function salvarGDrive() {
 
     // UPLOAD
     const pdfBlob = doc.output('blob');
-    const metaPdf = JSON.stringify({ name: nomeArq, mimeType: 'application/pdf', parents: [DRIVE_FOLDER_ID] });
+    const metaPdf = JSON.stringify({ name: nomeArq, mimeType: 'application/pdf', parents: [DRIVE_FOLDER_ORCAMENTO_ID] });
     const formData = new FormData();
     formData.append('metadata', new Blob([metaPdf], { type: 'application/json' }));
     formData.append('file', pdfBlob, nomeArq);
