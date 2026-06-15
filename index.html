@@ -171,8 +171,8 @@ async function gerarPropostaPDF() {
     // Parágrafo
     const paragrafo = 'É com grande satisfação que elaboramos esta proposta comercial, pois acreditamos que juntos podemos transformar a gestão financeira da '+nome+'. Desta forma, a seguinte proposta é específica e personalizada conforme os pontos discutidos com os responsáveis. O quadro abaixo detalha o escopo do trabalho.';
     doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(40,40,40);
-    const pLines = doc.splitTextToSize(paragrafo, W-1);
-    doc.text(pLines, M, y, {align:'justify'}); y+=pLines.length*5+8;
+    const pLines = doc.splitTextToSize(paragrafo, W-2);
+    doc.text(pLines, M, y, {align:'justify', maxWidth: W-2}); y+=pLines.length*5+8;
 
     // Tabela de escopo
     const renderLinha = (label, bullets) => {
@@ -217,8 +217,8 @@ async function gerarPropostaPDF() {
 
     doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(40,40,40);
     const invTxt='Para o desenvolvimento do projeto com início imediato após assinatura do contrato, apresentamos o seguinte orçamento mensal:';
-    const invL=doc.splitTextToSize(invTxt,W);
-    doc.text(invL,M,y,{align:'justify'}); y+=invL.length*5+6;
+    const invL=doc.splitTextToSize(invTxt,W-2);
+    doc.text(invL,M,y,{align:'justify', maxWidth: W-2}); y+=invL.length*5+6;
 
     // Tabela investimento
     doc.setFillColor(12,68,72); doc.rect(M,y,W*0.35,8,'F');
@@ -257,7 +257,7 @@ async function gerarPropostaPDF() {
       doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(80,80,80);
       obsLinhas.forEach((obs,i)=>{
         const prefix=obsLinhas.length>1?`${i+1}) `:'Obs.: ';
-        const lines=doc.splitTextToSize(prefix+obs+';',W);
+        const lines=doc.splitTextToSize(prefix+obs+';',W-2);
         doc.text(lines,M,y); y+=lines.length*4.5;
       });
       y+=4;
@@ -268,10 +268,10 @@ async function gerarPropostaPDF() {
     doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(223,135,60);
     doc.text('Aceite da proposta',105,y,{align:'center'}); y+=7;
     doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(40,40,40);
-    const a1=doc.splitTextToSize('Em caso de aceite da proposta, envie os dados da empresa clicando e preenchendo o seguinte formulário.',W);
-    doc.text(a1,M,y,{align:'justify'}); y+=a1.length*5+4;
-    const a2=doc.splitTextToSize('Estamos à disposição para discutir esta proposta em mais detalhes e responder a quaisquer dúvidas que possa surgir. Agradecemos pela oportunidade de apresentar nossa proposta de serviço. Estamos confiantes de que nossa solução trará benefícios significativos para a empresa.',W);
-    doc.text(a2,M,y,{align:'justify'});
+    const a1=doc.splitTextToSize('Em caso de aceite da proposta, envie os dados da empresa clicando e preenchendo o seguinte formulário.',W-2);
+    doc.text(a1,M,y,{align:'justify', maxWidth: W-2}); y+=a1.length*5+4;
+    const a2=doc.splitTextToSize('Estamos à disposição para discutir esta proposta em mais detalhes e responder a quaisquer dúvidas que possa surgir. Agradecemos pela oportunidade de apresentar nossa proposta de serviço. Estamos confiantes de que nossa solução trará benefícios significativos para a empresa.',W-2);
+    doc.text(a2,M,y,{align:'justify', maxWidth: W-2});
 
 
 
