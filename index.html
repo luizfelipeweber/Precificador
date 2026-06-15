@@ -69,11 +69,6 @@ function autoGrow(el) {
   el.style.height = (el.scrollHeight) + 'px';
 }
 
-function sincProposta() {
-  const nome = document.getElementById('prop_cliente_nome')?.value || '';
-  const cf = document.getElementById('cliente');
-  if (cf && nome && cf.value !== nome) { cf.value = nome; calcular(); }
-}
 
 function getAtivos(list) {
   return list
@@ -91,7 +86,7 @@ async function gerarPropostaPDF() {
   if (!_state) calcular();
   const {v, c, ep} = _state;
 
-  const nome  = document.getElementById('prop_cliente_nome')?.value || document.getElementById('cliente')?.value || 'Cliente';
+  const nome  = document.getElementById('cliente')?.value || 'Cliente';
   const resp  = document.getElementById('prop_resp_nome')?.value || '';
   const email = document.getElementById('prop_cliente_email')?.value || '';
   const tel   = document.getElementById('prop_cliente_tel')?.value || '';
@@ -696,9 +691,25 @@ async function gerarPropostaPDF() {
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             Identificação
           </div>
-          <div class="field">
-            <label>Nome do cliente</label>
-            <input type="text" id="cliente" value="Móveis Desconzi" oninput="calcular()">
+          <div class="grid2" style="gap:8px">
+            <div class="field">
+              <label>Nome / Razão social</label>
+              <input type="text" id="cliente" value="Móveis Desconzi" oninput="calcular()">
+            </div>
+            <div class="field">
+              <label>Responsável</label>
+              <input type="text" id="prop_resp_nome" placeholder="Ex: Daniela">
+            </div>
+          </div>
+          <div class="grid2" style="gap:8px">
+            <div class="field">
+              <label>E-mail</label>
+              <input type="email" id="prop_cliente_email" placeholder="contato@empresa.com.br">
+            </div>
+            <div class="field">
+              <label>Telefone</label>
+              <input type="text" id="prop_cliente_tel" placeholder="(55) 99999-9999">
+            </div>
           </div>
           <div class="grid2" style="gap:8px">
             <div class="field">
@@ -1101,29 +1112,6 @@ async function gerarPropostaPDF() {
 
 
   <div id="sec-proposta" class="section" role="tabpanel">
-    <div class="card card-accent">
-      <div class="card-title">Dados do cliente</div>
-      <div class="grid2">
-        <div>
-          <div class="field"><label>Nome / Razão social</label><input type="text" id="prop_cliente_nome" placeholder="Ex: Móveis Desconzi" oninput="sincProposta()"></div>
-          <div class="field"><label>E-mail</label><input type="email" id="prop_cliente_email" placeholder="contato@empresa.com.br"></div>
-          <div class="field"><label>Telefone</label><input type="text" id="prop_cliente_tel" placeholder="(55) 99999-9999"></div>
-        </div>
-        <div>
-          <div class="field"><label>Responsável (nome)</label><input type="text" id="prop_resp_nome" placeholder="Ex: Daniela"></div>
-          <div class="field"><label>Tratamento</label>
-            <select id="prop_resp_trat">
-              <option value="o proprietário">o proprietário</option>
-              <option value="a proprietária">a proprietária</option>
-              <option value="os sócios">os sócios</option>
-              <option value="os gestores">os gestores</option>
-              <option value="as gestoras">as gestoras</option>
-              <option value="os proprietários">os proprietários</option>
-            </select>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <div class="card">
       <div class="card-title">Implantação — atividades previstas</div>
@@ -1191,7 +1179,7 @@ function showTab(tab, el) {
   el.classList.add('active');
   if (tab === 'historico') carregarHistorico();
   if (tab === 'cenarios')  calcularCenarios();
-  if (tab === 'proposta')  { renderChecks(); sincProposta(); }
+  if (tab === 'proposta')  { renderChecks(); }
 }
 
 // ─── BD ──────────────────────────────────────────────────────────────────────
