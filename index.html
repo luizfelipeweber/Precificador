@@ -92,6 +92,7 @@ async function gerarPropostaPDF() {
   const {v, c, ep} = _state;
 
   const nome  = document.getElementById('prop_cliente_nome')?.value || document.getElementById('cliente')?.value || 'Cliente';
+  const resp  = document.getElementById('prop_resp_nome')?.value || '';
   const email = document.getElementById('prop_cliente_email')?.value || '';
   const tel   = document.getElementById('prop_cliente_tel')?.value || '';
   const dias  = document.getElementById('prop_impl_dias')?.value || '30';
@@ -162,7 +163,7 @@ async function gerarPropostaPDF() {
     doc.text(' '+ZELO_TEL, M+6.5, y+20);
     // Lado cliente
     doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(12,68,72);
-    doc.text(nome, M+W/2+3, y+7);
+    doc.text(nome+(resp?' - '+resp:''), M+W/2+3, y+7);
     doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(12,68,72);
     if(email){ doc.text('@', M+W/2+3, y+14); doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(60,60,60); doc.text(' '+email, M+W/2+6.5, y+14); }
     if(tel)  { doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(12,68,72); doc.text('T', M+W/2+3, y+20); doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(60,60,60); doc.text(' '+tel, M+W/2+6.5, y+20); }
@@ -186,10 +187,10 @@ async function gerarPropostaPDF() {
       doc.setDrawColor(180,180,180); doc.setLineWidth(0.2);
       doc.rect(colL,yS,W,totalH);
       doc.line(colR,yS,colR,yS+totalH);
-      doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(12,68,72);
+      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(12,68,72);
       const lLines=doc.splitTextToSize(label,wL-6);
       doc.text(lLines, colL+wL/2, yS+totalH/2-(lLines.length*4)/2+4, {align:'center'});
-      doc.setFontSize(8); doc.setTextColor(40,40,40);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(40,40,40);
       let bY=yS+5;
       bullets.forEach(b=>{
         const lines=doc.splitTextToSize('• '+b, wR-8);
@@ -221,15 +222,13 @@ async function gerarPropostaPDF() {
     doc.text(invL,M,y,{align:'justify', maxWidth: W-2}); y+=invL.length*5+6;
 
     // Tabela investimento
-    doc.setFillColor(12,68,72); doc.rect(M,y,W*0.35,8,'F');
-    doc.setFillColor(255,255,255); doc.rect(M+W*0.35,y,W*0.65,8,'F');
+    doc.setFillColor(12,68,72); doc.rect(M,y,W,8,'F');
     doc.setDrawColor(180,180,180); doc.setLineWidth(0.2);
     doc.rect(M,y,W,8);
     doc.line(M+W*0.35,y,M+W*0.35,y+8);
     doc.line(M+W*0.73,y,M+W*0.73,y+8);
     doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(255,255,255);
     doc.text('Serviço',M+3,y+5.5);
-    doc.setTextColor(40,40,40);
     doc.text('Condições de pagamento',M+W*0.35+3,y+5.5);
     doc.text('Valor',M+W*0.73+3,y+5.5);
     y+=8;
@@ -239,9 +238,6 @@ async function gerarPropostaPDF() {
     doc.line(M+W*0.73,y,M+W*0.73,y+8);
     doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(40,40,40);
     doc.text('BPO Financeiro',M+3,y+5.5);
-    doc.setDrawColor(180,180,180); doc.setLineWidth(0.4);
-    doc.line(M+W*0.35+2,y+2,M+W*0.35+2,y+6);
-    doc.setLineWidth(0.2);
     doc.text('Mensal durante 12 meses',M+W*0.35+5,y+5.5);
     doc.setFont('helvetica','bold');
     const pvFmt='R$ '+(v.pv_prat||0).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
