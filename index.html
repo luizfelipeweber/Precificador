@@ -138,12 +138,12 @@ async function gerarPropostaPDF() {
     };
 
     addHeader();
-    y += 16;
+    y += 4;
 
     // Card de identificação (data logo acima)
     doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100,100,100);
     const dtCap = dataEmissao.charAt(0).toUpperCase()+dataEmissao.slice(1);
-    doc.text(dtCap+' | Válida até: '+dataValidade, M, y); y+=5;
+    doc.text(dtCap+' | Válida até: '+dataValidade, M, y); y+=4;
 
     // Card de identificação
     doc.setFillColor(245,246,247); doc.rect(M,y,W,24,'F');
@@ -166,13 +166,13 @@ async function gerarPropostaPDF() {
     doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(12,68,72);
     if(email){ doc.text('@', M+W/2+3, y+14); doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(60,60,60); doc.text(' '+email, M+W/2+6.5, y+14); }
     if(tel)  { doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(12,68,72); doc.text('T', M+W/2+3, y+20); doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(60,60,60); doc.text(' '+tel, M+W/2+6.5, y+20); }
-    y+=30;
+    y+=27;
 
     // Parágrafo
     const paragrafo = 'É com grande satisfação que elaboramos esta proposta comercial, pois acreditamos que juntos podemos transformar a gestão financeira da '+nome+'. Desta forma, a seguinte proposta é específica e personalizada conforme os pontos discutidos com os responsáveis. O quadro abaixo detalha o escopo do trabalho.';
     doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(40,40,40);
     const pLines = doc.splitTextToSize(paragrafo, W-2);
-    doc.text(pLines, M, y, {align:'justify', maxWidth: W-2}); y+=pLines.length*5+8;
+    doc.text(pLines, M, y, {align:'justify', maxWidth: W-2}); y+=pLines.length*4.5+5;
 
     // Tabela de escopo
     const renderLinha = (label, bullets) => {
