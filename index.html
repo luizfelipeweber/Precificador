@@ -130,6 +130,10 @@ async function gerarPropostaPDF() {
     const addHeader = () => {
       doc.addImage(CABECALHO_B64,'JPEG',0,0,210,54.8);
       doc.addImage(RODAPE_B64,'JPEG',0,288.6,210,8.4);
+      doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(120,120,120);
+      doc.text('ZELO GESTAO LTDA',  M+W, 280,   {align:'right'});
+      doc.text('CNPJ 45.614.439/0001-42', M+W, 283.5, {align:'right'});
+      doc.text('CRA RS-004729/O',   M+W, 287,   {align:'right'});
       y=59;
     };
 
