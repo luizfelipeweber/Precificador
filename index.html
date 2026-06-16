@@ -189,6 +189,7 @@ async function gerarPropostaPDF() {
     if(email){ doc.text('@', M+W/2+3, y+14); doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(60,60,60); doc.text(' '+email, M+W/2+6.5, y+14); }
     if(tel)  { doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(12,68,72); doc.text('T', M+W/2+3, y+20); doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(60,60,60); doc.text(' '+tel, M+W/2+6.5, y+20); }
     y+=27;
+    y+=3;
 
     // Parágrafo
     const paragrafo = 'É com grande satisfação que elaboramos esta proposta comercial, pois acreditamos que juntos podemos transformar a gestão financeira da '+nome+'. Desta forma, a seguinte proposta é específica e personalizada conforme os pontos discutidos com os responsáveis. O quadro abaixo detalha o escopo do trabalho.';
@@ -296,9 +297,11 @@ async function gerarPropostaPDF() {
         const fi=line.indexOf('formulário');
         const before=line.substring(0,fi);
         const after=line.substring(fi+10); // 10 = 'formulário'.length
-        const bW=doc.getTextWidth(before);
+        const beforeTrim=before.trimEnd();
+        const spW=doc.getTextWidth(' ');
+        const bW=doc.getTextWidth(beforeTrim)+(before.endsWith(' ')?spW:0);
         const lW=doc.getTextWidth('formulário');
-        if(before) doc.setTextColor(40,40,40), doc.text(before,M,a1Y);
+        if(beforeTrim) { doc.setTextColor(40,40,40); doc.text(beforeTrim,M,a1Y); }
         doc.setTextColor(12,68,72);
         doc.textWithLink('formulário',M+bW,a1Y,{url:formUrl});
         doc.setTextColor(40,40,40);
