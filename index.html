@@ -194,7 +194,7 @@ async function gerarPropostaPDF() {
     const paragrafo = 'É com grande satisfação que elaboramos esta proposta comercial, pois acreditamos que juntos podemos transformar a gestão financeira da '+nome+'. Desta forma, a seguinte proposta é específica e personalizada conforme os pontos discutidos com os responsáveis. O quadro abaixo detalha o escopo do trabalho.';
     doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(40,40,40);
     const pLines = doc.splitTextToSize(paragrafo, W-2);
-    doc.text(pLines, M, y, {align:'justify', maxWidth: W-2}); y+=pLines.length*4.5+5;
+    doc.text(pLines, M, y, {align:'justify', maxWidth: W-2}); y+=pLines.length*4.5+3;
 
     // Tabela de escopo
     const renderLinha = (label, bullets) => {
@@ -266,7 +266,7 @@ async function gerarPropostaPDF() {
     y+=10;
 
     // Observações
-    y+=6;
+    y+=3;
     const obsLinhas=[];
     if(obsSA) obsLinhas.push('Este é o valor total do serviço sem considerar a assessoria já contratada');
     if(obsCA) obsLinhas.push('Este valor do serviço já inclui a mensalidade do sistema Conta Azul');
@@ -286,8 +286,29 @@ async function gerarPropostaPDF() {
     doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(223,135,60);
     doc.text('Aceite da proposta',105,y,{align:'center'}); y+=7;
     doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(40,40,40);
-    const a1=doc.splitTextToSize('Em caso de aceite da proposta, envie os dados da empresa clicando e preenchendo o seguinte formulário.',W-2);
-    doc.text(a1,M,y,{align:'justify', maxWidth: W-2}); y+=a1.length*5+4;
+    const a1Txt='Em caso de aceite da proposta, envie os dados da empresa clicando e preenchendo o seguinte formulário.';
+    const a1=doc.splitTextToSize(a1Txt,W-2);
+    const formUrl='https://docs.google.com/forms/d/e/1FAIpQLSdJyZpw9xH2NIXS8S1YtEthmX8yhs8jtp1ABadr0kP-uBB_Vw/viewform';
+    let a1Y=y;
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+    a1.forEach(line=>{
+      if(line.includes('formulário')){
+        const fi=line.indexOf('formulário');
+        const before=line.substring(0,fi);
+        const after=line.substring(fi+10); // 10 = 'formulário'.length
+        const bW=doc.getTextWidth(before);
+        const lW=doc.getTextWidth('formulário');
+        if(before) doc.setTextColor(40,40,40), doc.text(before,M,a1Y);
+        doc.setTextColor(12,68,72);
+        doc.textWithLink('formulário',M+bW,a1Y,{url:formUrl});
+        doc.setTextColor(40,40,40);
+        if(after) doc.text(after,M+bW+lW,a1Y);
+      } else {
+        doc.setTextColor(40,40,40); doc.text(line,M,a1Y);
+      }
+      a1Y+=5;
+    });
+    y+=a1.length*5+4;
     const a2=doc.splitTextToSize('Estamos à disposição para discutir esta proposta em mais detalhes e responder a quaisquer dúvidas que possa surgir. Agradecemos pela oportunidade de apresentar nossa proposta de serviço. Estamos confiantes de que nossa solução trará benefícios significativos para a empresa.',W-2);
     doc.text(a2,M,y,{align:'justify', maxWidth: W-2});
 
