@@ -49,6 +49,16 @@ const OP_BULLETS = [
   {id:'op14', txt:'Auxílio nas negociações de passivos bancários', on:false},
 ];
 
+// ─── Pré-preenchimento via URL ────────────────────────────────────────────────
+(function () {
+  try {
+    var raw = new URLSearchParams(window.location.search).get('data');
+    window.PREFILL = raw ? JSON.parse(atob(raw)) : null;
+  } catch (e) { window.PREFILL = null; }
+})();
+
+
+
 function renderChecks() {
   [['impl-checks', IMPL_BULLETS], ['op-checks', OP_BULLETS]].forEach(([id, list]) => {
     const el = document.getElementById(id);
@@ -61,6 +71,18 @@ function renderChecks() {
       </div>`).join('');
     // auto-ajustar altura inicial
     list.forEach(b => { const t = document.getElementById(b.id+'_txt'); if (t) autoGrow(t); });
+    // aplicar estados do PREFILL
+    if (window.PREFILL) {
+      const bMap = id === 'impl-checks' ? window.PREFILL.impl_bullets : window.PREFILL.op_bullets;
+      if (bMap) {
+        list.forEach(b => {
+          const cb = document.getElementById(b.id);
+          if (cb && bMap[b.id] !== undefined) cb.checked = !!bMap[b.id];
+          const tx = document.getElementById(b.id + '_txt');
+          if (tx && bMap[b.id + '_txt']) { tx.value = bMap[b.id + '_txt']; autoGrow(tx); }
+        });
+      }
+    }
   });
 }
 
@@ -1905,9 +1927,36 @@ function resetBD() {
   calcular();
 }
 
+
+// ─── preencherCampos ──────────────────────────────────────────────────────────
+function preencherCampos(p) {
+  if (!p) return;
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (!el || val === undefined || val === null) return;
+    el.value = val;
+  };
+  ['cliente','prop_resp_nome','prop_cliente_email','prop_cliente_tel','data',
+   'lanc_ent','lanc_sai','conc_ent','conc_sai','agend','cartoes','contas',
+   'horas_impl','pv_praticado','complexidade','conta_azul','obs',
+   'prop_impl_extra','prop_op_extra','prop_obs_livre'].forEach(id => set(id, p[id]));
+  calcular();
+  // banner visual
+  if (!document.getElementById('prefill-banner')) {
+    const b = document.createElement('div');
+    b.id = 'prefill-banner';
+    b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#0c4448;color:#fff;' +
+      'text-align:center;font-size:13px;font-weight:600;padding:8px 16px;letter-spacing:.02em';
+    b.textContent = '✓ Pré-preenchido pelo projeto Claude — revise os campos antes de gerar a proposta';
+    document.body.prepend(b);
+    setTimeout(() => b.remove(), 7000);
+  }
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 document.getElementById('data').valueAsDate = new Date();
 calcular();
+if (window.PREFILL) preencherCampos(window.PREFILL);
 </script>
 </body>
 </html>
