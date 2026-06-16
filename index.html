@@ -201,7 +201,7 @@ async function gerarPropostaPDF() {
       const colL=M, colR=M+W*0.32, wL=W*0.32, wR=W*0.68;
       doc.setFontSize(8);
       let allLines=[];
-      bullets.forEach(b=>{ allLines=allLines.concat(doc.splitTextToSize('• '+b, wR-8)); });
+      bullets.forEach(b=>{ allLines=allLines.concat(doc.splitTextToSize('• '+b, wR-12)); });
       const totalH=Math.max(allLines.length*4.5+8,16);
       checkY(totalH+2);
       const yS=y;
@@ -214,8 +214,8 @@ async function gerarPropostaPDF() {
       doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(40,40,40);
       let bY=yS+5;
       bullets.forEach(b=>{
-        const lines=doc.splitTextToSize('• '+b, wR-8);
-        doc.text(lines, colR+4, bY);
+        const lines=doc.splitTextToSize('• '+b, wR-12);
+        doc.text(lines, colR+4, bY, {maxWidth: wR-12});
         bY+=lines.length*4.5;
       });
       y=yS+totalH+2;
@@ -266,6 +266,7 @@ async function gerarPropostaPDF() {
     y+=10;
 
     // Observações
+    y+=6;
     const obsLinhas=[];
     if(obsSA) obsLinhas.push('Este é o valor total do serviço sem considerar a assessoria já contratada');
     if(obsCA) obsLinhas.push('Este valor do serviço já inclui a mensalidade do sistema Conta Azul');
@@ -1971,8 +1972,12 @@ function preencherCampos(p) {
   };
   ['cliente','prop_resp_nome','prop_cliente_email','prop_cliente_tel','data',
    'lanc_ent','lanc_sai','conc_ent','conc_sai','agend','cartoes','contas',
+   't_lanc_ent','t_lanc_sai','t_conc_ent','t_conc_sai','t_agend',
    'horas_impl','pv_praticado','complexidade','conta_azul','obs',
-   'prop_impl_extra','prop_op_extra','prop_obs_livre'].forEach(id => set(id, p[id]));
+   'prop_obs_livre'].forEach(id => set(id, p[id]));
+  // extras: ; → \n para que getExtras() trate cada item como linha separada
+  if (p.prop_impl_extra !== undefined) set('prop_impl_extra', p.prop_impl_extra.split(';').map(s=>s.trim()).filter(Boolean).join('\n'));
+  if (p.prop_op_extra   !== undefined) set('prop_op_extra',   p.prop_op_extra.split(';').map(s=>s.trim()).filter(Boolean).join('\n'));
   calcular();
   // banner visual
   if (!document.getElementById('prefill-banner')) {
