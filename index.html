@@ -195,8 +195,8 @@ async function gerarPropostaPDF() {
     // Parágrafo
     const paragrafo = 'É com grande satisfação que elaboramos esta proposta comercial, pois acreditamos que juntos podemos transformar a gestão financeira da '+nome+'. Desta forma, a seguinte proposta é específica e personalizada conforme os pontos discutidos com os responsáveis. O quadro abaixo detalha o escopo do trabalho.';
     doc.setFont('Quicksand','normal'); doc.setFontSize(9); doc.setTextColor(40,40,40);
-    const pLines = doc.splitTextToSize(paragrafo, W-2);
-    doc.text(pLines, M, y, {align:'justify', maxWidth: W-2}); y+=pLines.length*4.5+3;
+    const pLines = doc.splitTextToSize(paragrafo, W);
+    doc.text(pLines, M, y, {align:'justify', maxWidth: W}); y+=pLines.length*4.5+3;
 
     // Tabela de escopo
     const renderLinha = (label, bullets) => {
@@ -1265,6 +1265,7 @@ async function gerarPropostaPDF() {
 // ─── Estado global ───────────────────────────────────────────────────────────
 let graficoInstance = null;
 let _state = null;
+let _checksInitialized = false;
 
 // ─── Navegação ───────────────────────────────────────────────────────────────
 function showTab(tab, el) {
@@ -1274,7 +1275,7 @@ function showTab(tab, el) {
   el.classList.add('active');
   if (tab === 'historico') carregarHistorico();
   if (tab === 'cenarios')  calcularCenarios();
-  if (tab === 'proposta')  { renderChecks(); }
+  if (tab === 'proposta' && !_checksInitialized) { renderChecks(); _checksInitialized = true; }
 }
 
 // ─── BD ──────────────────────────────────────────────────────────────────────
@@ -2047,7 +2048,8 @@ function importarJSON() {
   try { p = JSON.parse(raw); } catch(e) { st.className='status-msg error'; st.textContent='JSON inválido: '+e.message; return; }
   window.PREFILL = p;
   preencherCampos(p);
-  if (document.getElementById('sec-proposta').classList.contains('active')) renderChecks();
+  renderChecks();
+  _checksInitialized = true;
   fecharModal();
 }
 document.addEventListener('keydown', e => { if (e.key==='Escape') fecharModal(); });
