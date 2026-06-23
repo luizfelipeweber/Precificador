@@ -86,6 +86,11 @@ function renderChecks() {
   });
 }
 
+function refreshChecksHeights() {
+  document.querySelectorAll('#impl-checks textarea, #op-checks textarea').forEach(autoGrow);
+}
+if (document.fonts) document.fonts.ready.then(refreshChecksHeights);
+
 function autoGrow(el) {
   el.style.height = 'auto';
   el.style.height = (el.scrollHeight) + 'px';
@@ -1275,7 +1280,10 @@ function showTab(tab, el) {
   el.classList.add('active');
   if (tab === 'historico') carregarHistorico();
   if (tab === 'cenarios')  calcularCenarios();
-  if (tab === 'proposta' && !_checksInitialized) { renderChecks(); _checksInitialized = true; }
+  if (tab === 'proposta') {
+    if (!_checksInitialized) { renderChecks(); _checksInitialized = true; }
+    else refreshChecksHeights();
+  }
 }
 
 // ─── BD ──────────────────────────────────────────────────────────────────────
